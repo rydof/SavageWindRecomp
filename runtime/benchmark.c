@@ -240,6 +240,7 @@ size_t bench_format_markdown(const BenchSnapshot *snap, char *buf, size_t n) {
 
 #ifndef BENCH_STATS_ONLY
 #include <pthread.h>
+#include <stdatomic.h>
 #include "control.h"
 #include "framepace.h"
 #include "game_sites.h"
@@ -297,11 +298,7 @@ bool bench_save_csv(const BenchSnapshot *snap, char *out_path, size_t out_path_n
 #ifdef _WIN32
     localtime_s(&tmbuf, &now);
 #else
-#ifdef _WIN32
-    localtime_s(&tmbuf, &now);
-#else
     localtime_r(&now, &tmbuf);
-#endif
 #endif
     char path[600];
     snprintf(path, sizeof path, "%s/benchmark_%04d%02d%02d_%02d%02d%02d.csv",
@@ -369,8 +366,25 @@ static bool g_cancelled_run;
 static bool g_autostart_after_reboot;
 static BenchConfig g_autostart_cfg;
 static bool g_started_outside_save;
-static uint64_t g_launch_pulse_ns;
 static uint64_t g_launch_btn_mask;
+static uint64_t g_world_ready_ns;
+static _Atomic bool g_active_fast;
+static _Atomic bool g_hide_hud_fast;
+static _Atomic bool g_save_blocked_fast;
+static _Atomic bool g_cam_override_fast;
+
+static void sync_fast_flags(void) {
+    bool act = g_snap.phase >= BENCH_LAUNCHING && g_snap.phase <= BENCH_RESTORING;
+    bool hud = g_snap.phase >= BENCH_TELEPORTING && g_snap.phase <= BENCH_MEASURING;
+    bool blk = g_autostart_after_reboot || g_pending_start || act ||
+               (g_started_outside_save && (g_snap.phase == BENCH_DONE || g_snap.phase == BENCH_CANCELLED));
+    bool cam = (g_snap.phase == BENCH_SETTLING || g_snap.phase == BENCH_MEASURING) &&
+               g_snap.cfg.mode != BENCH_MODE_SPOT;
+    atomic_store_explicit(&g_active_fast, act, memory_order_release);
+    atomic_store_explicit(&g_hide_hud_fast, hud, memory_order_release);
+    atomic_store_explicit(&g_save_blocked_fast, blk, memory_order_release);
+    atomic_store_explicit(&g_cam_override_fast, cam, memory_order_release);
+}
 
 static uint32_t g_route_us[BENCH_MAX_FRAMES];
 static uint32_t g_route_frames;
@@ -497,6 +511,7 @@ static void start_current_route(uint64_t now_ns) {
         begin_phase(BENCH_SETTLING, now_ns, (double)g_snap.cfg.settle_s);
     } else {
         snprintf(g_snap.current_route_name, sizeof g_snap.current_route_name, "%s", k_routes[ridx].name);
+        LOG("[benchmark] route %d/%d: %s (teleporting)\n", g_queue_pos + 1, g_queue_len, k_routes[ridx].name);
         begin_phase(BENCH_TELEPORTING, now_ns, 45.0);
     }
 }
@@ -538,6 +553,8 @@ static void enter_restoring(uint64_t now_ns) {
     if (g_snap.cfg.mode == BENCH_MODE_SPOT || g_started_outside_save) {
         g_snap.phase = g_cancelled_run ? BENCH_CANCELLED : BENCH_DONE;
         menu_open_page(15);
+        LOG("[benchmark] finished (%s), %d routes recorded\n",
+            g_cancelled_run ? "cancelled" : "done", g_snap.nresults);
         return;
     }
     begin_phase(BENCH_RESTORING, now_ns, 15.0);
@@ -551,6 +568,7 @@ static void record_failed_route(int ridx, const char *reason) {
     snprintf(st->name, sizeof st->name, "%s", ridx >= 0 ? k_routes[ridx].name : "Current spot");
     st->failed = true;
     snprintf(st->fail_reason, sizeof st->fail_reason, "%s", reason);
+    LOG("[benchmark] route %s failed: %s\n", st->name, reason);
 }
 
 static void finish_measuring_route(uint64_t now_ns, double elapsed_s) {
@@ -613,6 +631,7 @@ bool bench_start_from_menu(const BenchConfig *cfg, bool in_game) {
         g_pending_cfg = c;
         g_pending_start = true;
         g_pending_cancel = false;
+        sync_fast_flags();
     }
     pthread_mutex_unlock(&g_lock);
     return !busy;
@@ -631,14 +650,12 @@ void bench_cancel(void) {
     } else if (g_snap.phase >= BENCH_LAUNCHING && g_snap.phase <= BENCH_RESTORING) {
         g_pending_cancel = true;
     }
+    sync_fast_flags();
     pthread_mutex_unlock(&g_lock);
 }
 
 bool bench_active(void) {
-    pthread_mutex_lock(&g_lock);
-    bool a = g_snap.phase >= BENCH_LAUNCHING && g_snap.phase <= BENCH_RESTORING;
-    pthread_mutex_unlock(&g_lock);
-    return a;
+    return atomic_load_explicit(&g_active_fast, memory_order_acquire);
 }
 
 bool bench_hud_visible(void) {
@@ -646,26 +663,18 @@ bool bench_hud_visible(void) {
 }
 
 bool bench_save_blocked(void) {
-    pthread_mutex_lock(&g_lock);
-    bool b = g_autostart_after_reboot || g_pending_start ||
-             (g_snap.phase >= BENCH_LAUNCHING && g_snap.phase <= BENCH_RESTORING) ||
-             (g_started_outside_save && (g_snap.phase == BENCH_DONE || g_snap.phase == BENCH_CANCELLED));
-    pthread_mutex_unlock(&g_lock);
-    return b;
+    return atomic_load_explicit(&g_save_blocked_fast, memory_order_acquire);
 }
 
 bool bench_hide_hud(void) {
-    pthread_mutex_lock(&g_lock);
-    bool h = g_snap.phase >= BENCH_TELEPORTING && g_snap.phase <= BENCH_MEASURING;
-    pthread_mutex_unlock(&g_lock);
-    return h;
+    return atomic_load_explicit(&g_hide_hud_fast, memory_order_acquire);
 }
 
 bool bench_camera_override(float out_eye[3], float out_at[3]) {
-    if (!out_eye || !out_at) return false;
+    if (!out_eye || !out_at || !atomic_load_explicit(&g_cam_override_fast, memory_order_acquire)) return false;
     pthread_mutex_lock(&g_lock);
     bool ok = false;
-    if (g_snap.phase == BENCH_AIMING || g_snap.phase == BENCH_SETTLING || g_snap.phase == BENCH_MEASURING) {
+    if ((g_snap.phase == BENCH_SETTLING || g_snap.phase == BENCH_MEASURING) && g_snap.cfg.mode != BENCH_MODE_SPOT) {
         int ridx = (g_queue_pos >= 0 && g_queue_pos < g_queue_len) ? g_queue[g_queue_pos] : -1;
         if (ridx >= 0 && ridx < BENCH_ROUTE_COUNT) {
             float t = 0.0f;
@@ -701,11 +710,25 @@ void bench_frame(uint64_t frame) {
     g_prev_frame_ns = now;
 
     pthread_mutex_lock(&g_lock);
+    static bool env_checked = false;
+    if (!env_checked) {
+        env_checked = true;
+        const char *auto_s = getenv("SAVAGEWIND_BENCH_AUTOSTART");
+        if (auto_s && auto_s[0] && g_snap.phase == BENCH_IDLE && !g_pending_start) {
+            BenchConfig cfg = {BENCH_MODE_QUICK, 0, 3, 2, true};
+            if (!strcmp(auto_s, "plateau")) { cfg.mode = BENCH_MODE_SINGLE; cfg.single_route = 0; }
+            else if (!strcmp(auto_s, "full")) cfg.mode = BENCH_MODE_FULL;
+            g_pending_cfg = cfg;
+            g_pending_start = true;
+            g_started_outside_save = true;
+            g_snap.started_outside_save = true;
+        }
+    }
     if (g_pending_start) {
         g_pending_start = false;
         g_cancelled_run = false;
         g_launch_btn_mask = 0;
-        g_launch_pulse_ns = 0;
+        g_world_ready_ns = 0;
         g_orig_hour = test_warp_hour(&g_orig_hour_held);
         memset(&g_snap.results, 0, sizeof g_snap.results);
         memset(&g_snap.overall, 0, sizeof g_snap.overall);
@@ -755,20 +778,33 @@ void bench_frame(uint64_t frame) {
     switch (g_snap.phase) {
     case BENCH_LAUNCHING: {
         g_launch_btn_mask = 0;
+        bool in_dlc = framepace_dlc_ui();
         bool in_title = framepace_title_ui();
         bool in_loading = framepace_loading_ui();
         bool in_menu = framepace_menu_ui() || (g_site.pause_state && LD32(g_site.pause_state) != 0);
-        if (in_title) {
-            // Pulse A (bit 0) every 0.8s for 120ms to press Continue on the title screen
+        if (in_dlc) {
+            g_world_ready_ns = 0;
+            uint64_t cycle = (now - g_phase_t0_ns) % 1000000000ull;
+            if (cycle < 120000000ull) g_launch_btn_mask = (1ull << 1);  // BTN_B
+        } else if (in_title) {
+            g_world_ready_ns = 0;
             uint64_t cycle = (now - g_phase_t0_ns) % 800000000ull;
-            if (cycle < 120000000ull) g_launch_btn_mask = (1ull << 0);
+            if (cycle < 120000000ull) g_launch_btn_mask = (1ull << 0);  // BTN_A
         } else if (in_menu && !in_loading) {
-            // Pulse B (bit 1) every 0.35s for 100ms to close BotW's Pause Menu
+            g_world_ready_ns = 0;
+            uint64_t slot = (now - g_phase_t0_ns) / 350000000ull;
             uint64_t cycle = (now - g_phase_t0_ns) % 350000000ull;
-            if (cycle < 100000000ull) g_launch_btn_mask = (1ull << 1);
+            if (cycle < 100000000ull) {
+                g_launch_btn_mask = (slot & 1) ? (1ull << 10) : (1ull << 1);  // alternate BTN_B and BTN_PLUS
+            }
         } else if (!in_loading && control_tp_link_pos(g_orig_pos)) {
-            start_current_route(now);
-            break;
+            if (!g_world_ready_ns) g_world_ready_ns = now;
+            if (now - g_world_ready_ns >= 1500000000ull) {
+                start_current_route(now);
+                break;
+            }
+        } else {
+            g_world_ready_ns = 0;
         }
         if (elapsed >= 25.0) {
             record_failed_route(ridx, in_title ? "No save to load" : "World not ready");
@@ -791,15 +827,15 @@ void bench_frame(uint64_t frame) {
             }
             break;
         }
-        int st = control_tp_status(NULL, 0);
+        char tp_err[128] = "";
+        int st = control_tp_status(tp_err, sizeof tp_err);
         if (st == 2) {
             control_fly_set(true);
             test_warp_set_hour(r->hour);
             test_warp_hold_hour(r->hour);
-            control_look_start(true, r->yaw, true, r->pitch, 15);
-            begin_phase(BENCH_AIMING, now, 4.0);
+            begin_phase(BENCH_SETTLING, now, (double)g_snap.cfg.settle_s);
         } else if (st == 3 || elapsed >= 45.0) {
-            record_failed_route(ridx, st == 3 ? "Teleport failed" : "Teleport timed out");
+            record_failed_route(ridx, st == 3 ? (tp_err[0] ? tp_err : "Teleport failed") : "Teleport timed out");
             g_queue_pos++;
             if (g_queue_pos < g_queue_len) start_current_route(now);
             else enter_restoring(now);
@@ -868,6 +904,7 @@ void bench_frame(uint64_t frame) {
     default:
         break;
     }
+    sync_fast_flags();
     pthread_mutex_unlock(&g_lock);
 }
 
@@ -899,6 +936,7 @@ RT_ON_RESET(bench_reset) {
         g_started_outside_save = false;
         g_snap.started_outside_save = false;
     }
+    sync_fast_flags();
     pthread_mutex_unlock(&g_lock);
 }
 

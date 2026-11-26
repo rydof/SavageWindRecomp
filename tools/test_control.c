@@ -19,6 +19,7 @@ void bench_frame(void) {}
 bool bench_active(void) { return false; }
 void bench_input_apply(uint64_t *b) { (void)b; }
 void control_tp_frame(void) {}
+void control_input_frame(uint64_t frame) { (void)frame; }
 
 static int failures, checks;
 #define CHECK(cond) do { checks++; if (!(cond)) { failures++; printf("FAIL line %d: %s\n", __LINE__, #cond); } } while (0)

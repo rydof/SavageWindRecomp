@@ -537,12 +537,16 @@ int control_console_names(const char *prefix, const char **out, int max) {
 extern void bench_frame(uint64_t frame);
 extern bool bench_active(void);
 extern void control_tp_frame(uint64_t frame);
+extern void control_input_frame(uint64_t frame);
 
 void control_frame(uint64_t frame) {
     if (!initialized) return;
     control_place_frame();
     bench_frame(frame);
-    if (!dev_mode && bench_active()) control_tp_frame(frame);
+    if (!dev_mode && bench_active()) {
+        control_tp_frame(frame);
+        control_input_frame(frame);
+    }
     if (dev_mode) control_game_frame(frame);
     console_pump();
     if (!queued) return;
