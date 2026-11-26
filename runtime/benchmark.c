@@ -225,7 +225,11 @@ bool bench_save_csv(const BenchSnapshot *snap, char *out_path, size_t out_path_n
 #ifdef _WIN32
     localtime_s(&tmbuf, &now);
 #else
+#ifdef _WIN32
+    localtime_s(&tmbuf, &now);
+#else
     localtime_r(&now, &tmbuf);
+#endif
 #endif
     char path[600];
     snprintf(path, sizeof path, "%s/benchmark_%04d%02d%02d_%02d%02d%02d.csv",
