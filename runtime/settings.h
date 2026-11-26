@@ -260,6 +260,10 @@ typedef struct {
     bool show_all_places;    // every shrine, tower, lab and stable on the map (runtime/place_display.c)
     int weather;             // WEATHER_COUNT: the game's, rain or thunderstorms kept out, or one weather held (weather.c)
     bool god_mode;           // Link takes no damage
+    bool no_fall_damage;     // Link takes no fall damage (assists.c)
+    int menu_text_scale;     // menu text size percent (85, 100, 115, 130)
+    bool show_health_numbers;// show compact health/status badge in play
+    bool fixed_lod;          // keep high-detail LODs at distance (draw_distance.c)
     bool one_hit_kill;       // whatever else takes damage loses all its life at once
     bool silent_link;        // Link's noise channel 1 (whistling and the sounds like it) stays at zero (silent_link.c)
     bool hero_soul_wind;     // Revali's Gale works in shrines and the Trial of the Sword (assists.c rt_hero_soul)

@@ -1623,3 +1623,7 @@ T("Measuring...", "Medindo...")
 T("Restoring position...", "Restaurando posição...")
 T("Press Esc to cancel", "Pressione Esc para cancelar")
     {"Saves are write-protected during the benchmark.", "Saves are write-protected during the benchmark."},
+    {"Fixed high LOD", "Fixed high LOD"},
+    {"Keep high-detail models at distance instead of switching to simplified LODs.", "Keep high-detail models at distance instead of switching to simplified LODs."},
+    {"Link takes no damage from falling.", "Link takes no damage from falling."},
+    {"No fall damage", "No fall damage"},

@@ -1623,3 +1623,7 @@ T("Measuring...", "計測中...")
 T("Restoring position...", "元の位置に戻しています...")
 T("Press Esc to cancel", "Escキーで中止")
     {"Saves are write-protected during the benchmark.", "Saves are write-protected during the benchmark."},
+    {"Fixed high LOD", "Fixed high LOD"},
+    {"Keep high-detail models at distance instead of switching to simplified LODs.", "Keep high-detail models at distance instead of switching to simplified LODs."},
+    {"Link takes no damage from falling.", "Link takes no damage from falling."},
+    {"No fall damage", "No fall damage"},
