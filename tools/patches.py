@@ -533,6 +533,23 @@ def _arrow_gravity(gen, a):
             f'  /* {a:#x}: ldr s1, [x20, #0x108] (arrow gravity) */')
 
 
+# Experimental windbomb-launch guard (runtime/hle/framepace.c rt_slide_launch_clear). The SLIDE action clears the
+# launch height twice (+0x20bc, +0x20c0) on every guest update, so above 30 fps it cancels a launch before its
+# delta-scaled timer (actor +0x1844) runs out. The helper performs both stores itself with the guest's s0 value
+# (v[0]: 0 on the normal path, 0.05f on one reachable path); the second guest store is dropped so the guard cannot
+# be undone by it.
+def _slide_launch_clear(gen, a):
+    assert _word(gen, a) == 0xbd20bd00, hex(_word(gen, a))  # str s0, [x8, #0x20bc]
+    return ('{ extern void rt_slide_launch_clear(uint64_t, uint32_t); '
+            'rt_slide_launch_clear(c->x[8], (uint32_t)c->v[0]); }'
+            f'  /* {a:#x}: str s0, [x8, #0x20bc] (SLIDE launch height clear) */')
+
+
+def _slide_launch_clear_second(gen, a):
+    assert _word(gen, a) == 0xbd20c100, hex(_word(gen, a))  # str s0, [x8, #0x20c0]
+    return f'  /* {a:#x}: str s0, [x8, #0x20c0]: cleared with +0x20bc by rt_slide_launch_clear */'
+
+
 # Experimental shield-surf takeoff grace (#305), runtime/hle/framepace.c. Preserve the original FP subtraction
 # through rt_fsub_s (runtime/cpu.h: fp_op_s on x86-64, a native FSUB on AArch64) when the grace is inactive,
 # including the game's FP exception/rounding behavior.
@@ -1552,6 +1569,8 @@ PATCHES = {
     'day_cycle_time_only': _day_cycle_step,
     'day_cycle_normal': _day_cycle_step,
     'arrow_fall_gravity': _arrow_gravity,
+    'slide_launch_clear': _slide_launch_clear,
+    'slide_launch_clear_second': _slide_launch_clear_second,
     'surf_contact': _surf_contact,
     'surf_boost_remove': _surf_boost_remove,
     'surf_jump_request': _surf_jump_request,

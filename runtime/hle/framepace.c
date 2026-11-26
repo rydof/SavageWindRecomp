@@ -419,6 +419,20 @@ float rt_arrow_gravity(uint64_t arrow, float g) {
     return g * g_frame_ratio;
 }
 
+// The SLIDE action's update clears Link's launch height (actor +0x20bc / +0x20c0) once per guest update, while the
+// launch timer at +0x1844 is delta-scaled: above 30 fps the clear cancels a windbomb launch early. SAVAGEWIND_LAUNCH_GUARD=1
+// holds both stores off while the timer is still running; at 30 fps and below, and once the timer ends, the guest's
+// stores still happen. The guest stores s0 (0 on the normal path, 0.05f on one reachable path), so the helper writes
+// that value through to keep the guard-off path identical to the guest. This experiment's in-game effect is unverified.
+void rt_slide_launch_clear(uint64_t actor, uint32_t value) {
+    static int guard = -1;
+    if (guard < 0) guard = env_int("SAVAGEWIND_LAUNCH_GUARD", 0) != 0;
+    if (!guard || g_frame_ratio >= 1.0f || VF(float, actor, 0x1844) <= 0.0f) {
+        VF(uint32_t, actor, 0x20bc) = value;
+        VF(uint32_t, actor, 0x20c0) = value;
+    }
+}
+
 // The physics step's solver microsteps (tools/patches.py _solver_steps, #161, #425): the game asks for delta frame x 6,
 // rounded (1.9.0 0x700156f930): 6 at 30 fps, 3 at 60, 2 at ~90, 1 or 2 at 120 (its delta frame wobbles around 0.25),
 // 1 from ~150. Holding a cucco over his head, Link's jump (0.61-0.63 m at 30 fps) depends on that count: 2 gave 0.13-0.20,
