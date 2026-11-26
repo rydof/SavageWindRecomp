@@ -3026,6 +3026,8 @@ static UiFonts menu_ui_fonts(void) {
 
 // One page's content, into the current window (in_game: the game is running)
 extern "C" void online_tab_draw(float scale);
+extern "C" bool online_overlay_wanted(void);
+extern "C" void online_overlay_draw(float scale, ImFont *font);
 static void page_body(int id, float scale, bool in_game) {
     switch (id) {
     case 0: tab_display(); break;
@@ -3282,7 +3284,7 @@ static bool menu_draws(bool *pointer_hover = NULL, float *pointer_box = NULL, bo
     if (gyro_show) *gyro_show = gyro_on;
     return g_open.load() || g_kbd.load() == 1 || g_sizes.load() || console_is_open() || gyro_on || hover ||
            g_settings.perf_overlay != PERF_OFF || act_log_enabled() || quick_inventory_sort_hint() || quick_drop_hint_state() ||
-           collect_map_shown() || ach_ui_active() || bench_hud_visible() || SDL_GetTicks() < g_notice_until.load();
+           collect_map_shown() || ach_ui_active() || bench_hud_visible() || online_overlay_wanted() || SDL_GetTicks() < g_notice_until.load();
 }
 
 bool menu_render_needed(void) { return menu_draws(); }
@@ -3369,6 +3371,7 @@ void menu_render(void *cmd, uint32_t target_w, uint32_t target_h) {
 
     if (g_settings.perf_overlay != PERF_OFF) perf_overlay_draw(io, scale);
     if (!open && !kbd && !sizes && !con && bench_hud_visible()) bench_ui_overlay(io.DisplaySize.x, io.DisplaySize.y, scale);
+    if (!open && !kbd && !sizes && !con && online_overlay_wanted()) online_overlay_draw(scale, menu_ui_fonts().body);
     ach_ui_toasts(io.DisplaySize.x, io.DisplaySize.y, scale);
     notice_draw(io, scale);
     if (act_log_enabled()) act_overlay_draw(io, scale);

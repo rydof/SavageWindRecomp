@@ -260,6 +260,40 @@ int online_take_estates(OnlineEnemy *e, uint8_t *from, int max);
 int online_enemies(float centre[3], OnlineEnemy *out, uint64_t *age_ns);
 void online_set_local_hour(float hour);  // (the frame loop: the local game's hour, -1 none)
 
+// Co-op Character Creator appearance (saved in online.ini, synced per player)
+enum {
+    ONLINE_OUTFIT_LIVE = 0,
+    ONLINE_OUTFIT_CHAMPION,
+    ONLINE_OUTFIT_WILD,
+    ONLINE_OUTFIT_STEALTH,
+    ONLINE_OUTFIT_HYLIAN,
+    ONLINE_OUTFIT_ROYAL_GUARD,
+    ONLINE_OUTFIT_ZORA,
+    ONLINE_OUTFIT_BARBARIAN,
+    ONLINE_OUTFIT_DARK_LINK,
+    ONLINE_OUTFIT_CUSTOM,
+    ONLINE_OUTFIT_COUNT
+};
+
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t name_color[3];
+    uint8_t outfit_preset;
+    uint8_t dye_color;
+    float scale;
+    char head_actor[28];
+    char upper_actor[28];
+    char lower_actor[28];
+} OnlineAppearance;
+#pragma pack(pop)
+
+void online_appearance_default(OnlineAppearance *out);
+void online_appearance_sanitize(OnlineAppearance *a);
+void online_appearance_preset_actors(int preset, const char **head, const char **upper, const char **lower);
+void online_set_appearance(const OnlineAppearance *a);
+void online_get_appearance(OnlineAppearance *out);
+bool online_player_appearance(int id, OnlineAppearance *out);
+
 // A dedicated server (main.c --server): runs until the process ends
 int online_server_main(int port, const char *password);
 

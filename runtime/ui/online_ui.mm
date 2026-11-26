@@ -126,6 +126,51 @@ extern "C" void online_tab_draw(float scale) {
             online_settings_save();
         if (guest) ImGui::EndDisabled();
     }
+
+    opt_section("Character creator");
+    {
+        OnlineAppearance app;
+        online_get_appearance(&app);
+        bool changed = false;
+        float col[3] = {app.name_color[0] / 255.0f, app.name_color[1] / 255.0f, app.name_color[2] / 255.0f};
+        if (ImGui::ColorEdit3(tr("Nameplate color"), col, ImGuiColorEditFlags_NoInputs)) {
+            app.name_color[0] = (uint8_t)(col[0] * 255.0f + 0.5f);
+            app.name_color[1] = (uint8_t)(col[1] * 255.0f + 0.5f);
+            app.name_color[2] = (uint8_t)(col[2] * 255.0f + 0.5f);
+            changed = true;
+        }
+        static const char *const outfits[] = {
+            "Live equipped", "Champion", "Wild", "Stealth", "Hylian",
+            "Royal Guard", "Zora", "Barbarian", "Dark Link", "Custom"
+        };
+        int preset = app.outfit_preset;
+        if (opt_choice("Outfit", &preset, outfits, ONLINE_OUTFIT_COUNT, 0,
+                       "Visual outfit preset for your co-op Link.")) {
+            app.outfit_preset = (uint8_t)preset;
+            changed = true;
+        }
+        if (app.outfit_preset == ONLINE_OUTFIT_CUSTOM) {
+            if (opt_text("Head armor", app.head_actor, sizeof app.head_actor, "Armor_001_Head", "Custom head armor actor.")) changed = true;
+            if (opt_text("Chest armor", app.upper_actor, sizeof app.upper_actor, "Armor_001_Upper", "Custom chest armor actor.")) changed = true;
+            if (opt_text("Leg armor", app.lower_actor, sizeof app.lower_actor, "Armor_001_Lower", "Custom leg armor actor.")) changed = true;
+        }
+        static const char *const dyes[] = {
+            "Original", "Blue", "Red", "Yellow", "White", "Black", "Purple", "Green",
+            "Light Blue", "Navy", "Orange", "Pink", "Crimson", "Light Yellow", "Brown", "Gray"
+        };
+        int dye = app.dye_color;
+        if (opt_choice("Armor dye", &dye, dyes, 16, 0, "Armor dye color.")) {
+            app.dye_color = (uint8_t)dye;
+            changed = true;
+        }
+        if (ImGui::SliderFloat(tr("Character height"), &app.scale, 0.85f, 1.15f, "%.2fx")) {
+            changed = true;
+        }
+        if (changed) {
+            online_set_appearance(&app);
+            online_settings_save();
+        }
+    }
     opt_end();
 }
 

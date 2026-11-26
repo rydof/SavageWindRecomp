@@ -1552,3 +1552,77 @@ void online_settings_save(void) {
             g_online.pvp, g_online.collide, g_online.revive, g_online.nopause);
     fclose(f);
 }
+
+// ---- Co-op Character Creator (runtime/online.h) ----
+static OnlineAppearance g_local_appearance = {{120, 225, 255}, ONLINE_OUTFIT_LIVE, 0, 1.0f, "", "", ""};
+static OnlineAppearance g_peer_appearances[ONLINE_MAX];
+static pthread_mutex_t g_app_mu = PTHREAD_MUTEX_INITIALIZER;
+
+void online_appearance_default(OnlineAppearance *out) {
+    if (!out) return;
+    memset(out, 0, sizeof *out);
+    out->name_color[0] = 120;
+    out->name_color[1] = 225;
+    out->name_color[2] = 255;
+    out->outfit_preset = ONLINE_OUTFIT_LIVE;
+    out->dye_color = 0;
+    out->scale = 1.0f;
+}
+
+void online_appearance_sanitize(OnlineAppearance *a) {
+    if (!a) return;
+    if (a->outfit_preset >= ONLINE_OUTFIT_COUNT) a->outfit_preset = ONLINE_OUTFIT_LIVE;
+    if (a->dye_color > 15) a->dye_color = 0;
+    if (!(a->scale >= 0.85f && a->scale <= 1.15f)) {
+        if (a->scale != a->scale) a->scale = 1.0f;  // NaN
+        else if (a->scale < 0.85f) a->scale = 0.85f;
+        else a->scale = 1.15f;
+    }
+    a->head_actor[sizeof a->head_actor - 1] = 0;
+    a->upper_actor[sizeof a->upper_actor - 1] = 0;
+    a->lower_actor[sizeof a->lower_actor - 1] = 0;
+}
+
+void online_appearance_preset_actors(int preset, const char **head, const char **upper, const char **lower) {
+    static const char *const k_presets[ONLINE_OUTFIT_COUNT][3] = {
+        {"", "", ""},                                                                   // 0: Live equipped
+        {"Armor_044_Head", "Armor_044_Upper", "Armor_001_Lower"},                       // 1: Champion
+        {"Armor_200_Head", "Armor_200_Upper", "Armor_200_Lower"},                       // 2: Wild
+        {"Armor_048_Head", "Armor_048_Upper", "Armor_048_Lower"},                       // 3: Stealth
+        {"Armor_001_Head", "Armor_001_Upper", "Armor_001_Lower"},                       // 4: Hylian
+        {"Armor_179_Head", "Armor_179_Upper", "Armor_179_Lower"},                       // 5: Royal Guard
+        {"Armor_006_Head", "Armor_006_Upper", "Armor_006_Lower"},                       // 6: Zora
+        {"Armor_009_Head", "Armor_009_Upper", "Armor_009_Lower"},                       // 7: Barbarian
+        {"Armor_171_Head", "Armor_171_Upper", "Armor_171_Lower"},                       // 8: Dark Link
+        {"", "", ""},                                                                   // 9: Custom
+    };
+    int p = (preset >= 0 && preset < ONLINE_OUTFIT_COUNT) ? preset : 0;
+    if (head) *head = k_presets[p][0];
+    if (upper) *upper = k_presets[p][1];
+    if (lower) *lower = k_presets[p][2];
+}
+
+void online_set_appearance(const OnlineAppearance *a) {
+    if (!a) return;
+    OnlineAppearance clean = *a;
+    online_appearance_sanitize(&clean);
+    pthread_mutex_lock(&g_app_mu);
+    g_local_appearance = clean;
+    pthread_mutex_unlock(&g_app_mu);
+}
+
+void online_get_appearance(OnlineAppearance *out) {
+    if (!out) return;
+    pthread_mutex_lock(&g_app_mu);
+    *out = g_local_appearance;
+    pthread_mutex_unlock(&g_app_mu);
+}
+
+bool online_player_appearance(int id, OnlineAppearance *out) {
+    if (!out || id < 0 || id >= ONLINE_MAX) return false;
+    pthread_mutex_lock(&g_app_mu);
+    *out = g_peer_appearances[id];
+    pthread_mutex_unlock(&g_app_mu);
+    if (out->scale < 0.85f || out->scale > 1.15f) online_appearance_default(out);
+    return true;
+}
