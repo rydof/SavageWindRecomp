@@ -28,6 +28,7 @@
 #include "settings.h"
 #include "hle.h"
 #include "kernel.h"
+#include "online.h"
 #include "control.h"
 #include "cli.h"
 #include "launch_flags_boot.h"
@@ -437,6 +438,13 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--scan-shaders")) scan = true;
         else if (!strcmp(argv[i], "--add-to-steam")) add_steam = true;
         else if (!strcmp(argv[i], "--precompile-shaders")) precompile = true;
+        else if (!strcmp(argv[i], "--server")) {
+            int port = i + 1 < argc && argv[i + 1][0] != '-' ? atoi(argv[++i]) : ONLINE_PORT;
+            const char *pass = NULL;
+            for (int k = i + 1; k + 1 < argc; k++)
+                if (!strcmp(argv[k], "--password")) pass = argv[k + 1];
+            return online_server_main(port > 0 && port < 65536 ? port : ONLINE_PORT, pass);
+        }
         else if (!strcmp(argv[i], "--precompile-shaders-if-needed")) precompile = precompile_if_needed = true;
         else if (!strcmp(argv[i], "--export-pipeline-seed") && i + 1 < argc) seed_out = argv[++i];
         else if (argv[i][0] != '-' && !realpath(argv[i], arg_root)) root = argv[i];  // (relative to where we started)
@@ -466,6 +474,7 @@ int main(int argc, char **argv) {
     int sparse_heap = g_settings.sparse_heap;
     if (sparse_heap < 0 || sparse_heap >= SPARSE_HEAP_COUNT) sparse_heap = SPARSE_HEAP_AUTO;
     LOG("[settings] sparse_heap=%s\n", sparse_heap_modes[sparse_heap]);
+    online_settings_load();
     if (cmd) {
         if (cli_owns_args(cmd)) return cli_run(cmd, argc - 2, argv + 2);
         if (!strcmp(cmd, "setup")) return launcher_setup_cli(root, cmd_src[0] ? cmd_src : NULL, json);

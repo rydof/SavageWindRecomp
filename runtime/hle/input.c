@@ -1287,6 +1287,14 @@ static void fill_state(Cpu *c) {
     b = unconsumed_buttons(b);
     { extern uint64_t quick_replace_buttons(uint64_t); b = quick_replace_buttons(b); }
     b = quick_drop_action_filter_buttons(b);
+    {
+        extern volatile uint64_t g_game_buttons;
+        g_game_buttons = b;
+    }
+    {
+        extern volatile int g_online_block_a;
+        if (g_online_block_a) b &= ~(1ull << BTN_A);
+    }
     // stick directions also appear as buttons (bits 16-23)
     if (lx < -16000) b |= 1ull << 16;
     if (ly > 16000) b |= 1ull << 17;

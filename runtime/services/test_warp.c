@@ -355,3 +355,5 @@ RT_ON_RESET(test_warp_reset) {
     frozen_manager = 0;
     pending_tod = -1;
 }
+
+uint64_t test_warp_gdt_mgr(void) { return game_data_manager(time_manager()); }

@@ -2986,6 +2986,7 @@ static const char *page_name(int id) {
     case 12: return "Mods";
     case 13: return "Achievements";
     case 15: return "Benchmark";
+    case 16: return "Co-op";
     }
     return "";
 }
@@ -3008,6 +3009,7 @@ static int game_pages(UiNavPage *out) {
     out[n++] = {12, "Mods", ICON_PUZZLE, 0, true};
     out[n++] = {13, "Achievements", ICON_TROPHY, 0, true};  // (runtime/ui/achievements_ui.mm)
     out[n++] = {15, "Benchmark", ICON_SLIDERS, 0, true};    // (runtime/ui/benchmark_ui.mm)
+    out[n++] = {16, "Co-op", ICON_SLIDERS, 0, true};        // (runtime/ui/online_ui.mm)
     // (Cheats, Teleport: only when started with -dev or SAVAGEWIND_DEV=1: cheats are developer mode, as the
     // console's give, tp and time)
     if (control_enabled()) out[n++] = {10, "Cheats", ICON_MAGIC, 0, true}, out[n++] = {11, "Teleport", ICON_LOCATION, 0, true};
@@ -3023,6 +3025,7 @@ static UiFonts menu_ui_fonts(void) {
 }
 
 // One page's content, into the current window (in_game: the game is running)
+extern "C" void online_tab_draw(float scale);
 static void page_body(int id, float scale, bool in_game) {
     switch (id) {
     case 0: tab_display(); break;
@@ -3042,6 +3045,9 @@ static void page_body(int id, float scale, bool in_game) {
         if (close) set_open(false);
         break;
     }
+    case 16:
+        online_tab_draw(scale);
+        break;
     case 12: {
         bool want_restart = false;
         mods_tab_draw(in_game, &want_restart);
