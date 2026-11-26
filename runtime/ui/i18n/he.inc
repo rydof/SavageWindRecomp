@@ -1708,3 +1708,7 @@ T("Press Esc to cancel", "לחץ Esc לביטול")
     {"Wild", "Wild"},
     {"Yellow", "Yellow"},
     {"Zora", "Zora"},
+    {"Fixed high LOD", "Fixed high LOD"},
+    {"Keep high-detail models at distance instead of switching to simplified LODs.", "Keep high-detail models at distance instead of switching to simplified LODs."},
+    {"Link takes no damage from falling.", "Link takes no damage from falling."},
+    {"No fall damage", "No fall damage"},

@@ -95,3 +95,5 @@ int rt_hero_soul(int which) {
     }
     return 0;
 }
+
+bool assists_no_fall_damage_enabled(void) { return g_settings.no_fall_damage; }
