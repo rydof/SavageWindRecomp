@@ -215,6 +215,8 @@ const char *const k_shadow[] = {"Console (896)", "High (2048)", "Ultra (4096)", 
 const int k_shadow_order[] = {SHADOW_POTATO, SHADOW_CONSOLE, SHADOW_HIGH, SHADOW_ULTRA, SHADOW_EXTREME};
 const char *const k_text[] = {"Off", "2x", "4x"};  // (sharper_text / 2)
 const char *const k_text_speed[TEXT_SPEED_COUNT] = {"Normal", "Fast", "Instant"};
+const char *const k_health_regen[HEALTH_REGEN_COUNT] = {"Off", "Slow", "Normal", "Fast"};
+constexpr int k_game_speed[] = GAME_SPEED_CHOICES;
 const char *const k_icons[] = {"Automatic", "Keyboard", "Xbox", "PlayStation", "Nintendo", "Steam Deck"};  // (ICONS_*)
 const char *const k_button_layout[BUTTON_LAYOUT_COUNT] = {
     "Automatic", "Nintendo", "Swap A / B", "Xbox", "Swap X / Y", "GameCube"
@@ -1532,6 +1534,27 @@ void build_items(void) {
     v.push_back(toggle(P_ACCESS, "No fall damage", "Link takes no damage from falling.",
                        [](const Item &) { return (int)g_settings.no_fall_damage; },
                        [](const Item &, int x) { g_settings.no_fall_damage = x; }, 0));
+    v.push_back(choice(P_ACCESS, "Health regeneration", "Link's hearts refill slowly while out of combat.",
+                       [](const Item &) { return N(k_health_regen); },
+                       [](const Item &, int x) { return tr(k_health_regen[x]); },
+                       [](const Item &) {
+                           int m = g_settings.health_regen;
+                           return m >= 0 && m < HEALTH_REGEN_COUNT ? m : 0;
+                       },
+                       [](const Item &, int x) { g_settings.health_regen = x; }, HEALTH_REGEN_OFF));
+    v.push_back(choice(P_ACCESS, "Game speed", "How fast the game runs in play. 100% is the game's own.",
+                       [](const Item &) { return N(k_game_speed); },
+                       [](const Item &, int x) {
+                           static std::string s;
+                           s = pct(k_game_speed[x]);
+                           return s.c_str();
+                       },
+                       [](const Item &) { return nearest(k_game_speed, N(k_game_speed), (float)g_settings.game_speed); },
+                       [](const Item &, int x) { g_settings.game_speed = k_game_speed[x]; }, 2));
+    v.push_back(toggle(P_ACCESS, "Show health on screen",
+                       "Shows Link's exact health and the last damaged enemy's health on screen.",
+                       [](const Item &) { return (int)g_settings.show_health_numbers; },
+                       [](const Item &, int x) { g_settings.show_health_numbers = x; }, 0));
     v.push_back(toggle(P_ACCESS, "One-hit kill", "Enemies go down in one hit.",
                        [](const Item &) { return (int)g_settings.one_hit_kill; },
                        [](const Item &, int x) { g_settings.one_hit_kill = x; }, 0));

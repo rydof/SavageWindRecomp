@@ -242,18 +242,32 @@ bool hearts_set(int32_t count) {
     return true;
 }
 
+extern void assists_link_hp_update(int32_t cur_qh, int32_t max_qh);
+extern int32_t assists_health_regen_step(int32_t cur_qh, int32_t max_qh, uint64_t now_ns);
+
 // Live hearts update on game thread (every frame in play from rt_item_tick):
-// sets Link's live current life and PlayerInfo->max_hearts immediately so the in-game HUD reflects the cheat
+// tracks Link's live HP, runs out-of-combat health regeneration, and applies Set hearts immediately
 void rt_hearts_tick(Cpu *c) {
+    uint64_t pinfo = g_site.player_info ? *(volatile uint64_t *)(uintptr_t)g_site.player_info : 0;
+    int32_t max_qh = pinfo ? (int32_t)lroundf(*(volatile float *)(uintptr_t)(pinfo + 0xa0)) : 0;
+    if (c && c->x[1] >= HEAP_BASE) {
+        int32_t cur_qh = *(volatile int32_t *)(uintptr_t)c->x[1];
+        assists_link_hp_update(cur_qh, max_qh);
+        int32_t next_qh = assists_health_regen_step(cur_qh, max_qh, plat_now_ns());
+        if (next_qh != cur_qh) {
+            *(volatile int32_t *)(uintptr_t)c->x[1] = next_qh;
+            assists_link_hp_update(next_qh, max_qh);
+        }
+    }
     int32_t h = __atomic_load_n(&want_hearts_tick, __ATOMIC_RELAXED);
     if (h < HEARTS_MIN || h > HEARTS_MAX) return;
 
-    uint64_t pinfo = g_site.player_info ? *(volatile uint64_t *)(uintptr_t)g_site.player_info : 0;
     if (pinfo) {
         *(volatile float *)(uintptr_t)(pinfo + 0xa0) = (float)(h * 4);
     }
-    if (c && c->x[1]) {
+    if (c && c->x[1] >= HEAP_BASE) {
         *(volatile int32_t *)(uintptr_t)c->x[1] = h * 4;
+        assists_link_hp_update(h * 4, h * 4);
         __atomic_store_n(&want_hearts_tick, -1, __ATOMIC_RELAXED);
         LOG("[cheats] hearts: applied %d containers (%d units) to live actor\n", (int)h, (int)(h * 4));
     }

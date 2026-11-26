@@ -9,14 +9,24 @@
 extern "C" {
 #include "../runtime/settings.h"
 #include "../runtime/input_bind.h"
+#include "../runtime/game_sites.h"
 const char *g_romfs_dir;
 Settings g_settings;
+GameSites g_site;
 static int device = DEVICE_PAD, family;
 int input_last_device(void) { return device; }
 int input_pad_family(void) { return family; }
 bool settings_steam_deck(void) { return false; }
 bool pc_cursor_preview_active(void) { return false; }
 bool pc_cursor_sensor_active(void) { return false; }
+const char *collectibles_region_name(int region) { (void)region; return nullptr; }
+uint64_t framepace_period_ns(void) { return 16666667ull; }
+bool framepace_dialogue_ui(void) { return false; }
+bool input_cam_live(void) { return false; }
+bool text_upscale(const uint8_t *src, uint32_t w, uint32_t h, uint32_t k, bool sharp, uint32_t x, uint32_t y, uint8_t *out) {
+    (void)src, (void)w, (void)h, (void)k, (void)sharp, (void)x, (void)y, (void)out;
+    return false;
+}
 bool rt_resource(const char *name, const char *dev_rel, char *out, size_t cap) {
     (void)name;
     snprintf(out, cap, "%s", dev_rel);

@@ -1713,3 +1713,10 @@ T("Press Esc to cancel", "Esc 키를 눌러 취소")
     {"Keep high-detail models at distance instead of switching to simplified LODs.", "Keep high-detail models at distance instead of switching to simplified LODs."},
     {"Link takes no damage from falling.", "Link takes no damage from falling."},
     {"No fall damage", "No fall damage"},
+T("Enemy", "적")
+T("Game speed", "게임 속도")
+T("Health regeneration", "체력 자동 회복")
+T("How fast the game runs in play. 100% is the game's own.", "플레이 중 게임 진행 속도입니다. 100%가 기본 속도입니다.")
+T("Link's hearts refill slowly while out of combat.", "전투 중이 아닐 때 링크의 하트가 천천히 회복됩니다.")
+T("Show health on screen", "화면에 체력 표시")
+T("Shows Link's exact health and the last damaged enemy's health on screen.", "화면에서 링크의 정확한 체력과 마지막으로 피해를 준 적의 체력을 표시합니다.")

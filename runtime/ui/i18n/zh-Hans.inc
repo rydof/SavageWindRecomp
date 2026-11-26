@@ -1713,3 +1713,10 @@ T("Press Esc to cancel", "按 Esc 取消")
     {"Keep high-detail models at distance instead of switching to simplified LODs.", "Keep high-detail models at distance instead of switching to simplified LODs."},
     {"Link takes no damage from falling.", "Link takes no damage from falling."},
     {"No fall damage", "No fall damage"},
+T("Enemy", "敌人")
+T("Game speed", "游戏速度")
+T("Health regeneration", "生命值自动恢复")
+T("How fast the game runs in play. 100% is the game's own.", "游玩时的游戏速度。100% 为游戏原速。")
+T("Link's hearts refill slowly while out of combat.", "非战斗状态下林克的红心会缓慢恢复。")
+T("Show health on screen", "在屏幕上显示生命值")
+T("Shows Link's exact health and the last damaged enemy's health on screen.", "在屏幕上显示林克的精确生命值以及最后受到伤害的敌人的生命值。")

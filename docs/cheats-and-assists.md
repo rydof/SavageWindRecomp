@@ -38,6 +38,10 @@ your settings.
 | Option | What it does |
 |---|---|
 | God mode | Link takes no damage. |
+| No fall damage | Link takes no damage from falling. |
+| Health regeneration | Link's hearts refill slowly while out of combat (Off, Slow, Normal, Fast). |
+| Game speed | How fast the game runs in play (50% to 200%). 100% is the game's own. |
+| Show health on screen | Shows Link's exact health and the last damaged enemy's health on screen. |
 | One-hit kill | Enemies go down in one hit. |
 | Silent Link | Link stays quiet, so enemies do not hear him. |
 | Unlock champion abilities | The four champion abilities are usable anywhere from the start of the game, in shrines and in the Trial of the Sword too; the pause menu cannot switch them off. |

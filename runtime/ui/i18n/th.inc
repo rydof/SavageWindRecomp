@@ -1713,3 +1713,10 @@ T("Press Esc to cancel", "กด Esc เพื่อยกเลิก")
     {"Keep high-detail models at distance instead of switching to simplified LODs.", "Keep high-detail models at distance instead of switching to simplified LODs."},
     {"Link takes no damage from falling.", "Link takes no damage from falling."},
     {"No fall damage", "No fall damage"},
+T("Enemy", "ศัตรู")
+T("Game speed", "ความเร็วเกม")
+T("Health regeneration", "ฟื้นฟูพลังชีวิตอัตโนมัติ")
+T("How fast the game runs in play. 100% is the game's own.", "ความเร็วของเกมขณะเล่น 100% คือความเร็วปกติของเกม")
+T("Link's hearts refill slowly while out of combat.", "หัวใจของลิงก์จะค่อยๆ ฟื้นฟูเมื่อไม่ได้ต่อสู้")
+T("Show health on screen", "แสดงพลังชีวิตบนหน้าจอ")
+T("Shows Link's exact health and the last damaged enemy's health on screen.", "แสดงพลังชีวิตที่แน่นอนของลิงก์และศัตรูตัวล่าสุดที่โจมตีบนหน้าจอ")

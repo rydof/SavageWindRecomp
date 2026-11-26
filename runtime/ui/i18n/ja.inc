@@ -1713,3 +1713,10 @@ T("Press Esc to cancel", "Escキーで中止")
     {"Keep high-detail models at distance instead of switching to simplified LODs.", "Keep high-detail models at distance instead of switching to simplified LODs."},
     {"Link takes no damage from falling.", "Link takes no damage from falling."},
     {"No fall damage", "No fall damage"},
+T("Enemy", "敵")
+T("Game speed", "ゲーム速度")
+T("Health regeneration", "体力自動回復")
+T("How fast the game runs in play. 100% is the game's own.", "プレイ中のゲーム速度です。100%が通常速度です。")
+T("Link's hearts refill slowly while out of combat.", "戦闘中でないとき、リンクのハートが少しずつ回復します。")
+T("Show health on screen", "画面に体力を表示")
+T("Shows Link's exact health and the last damaged enemy's health on screen.", "リンクの正確な体力と最後に攻撃した敵の体力を画面に表示します。")

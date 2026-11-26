@@ -33,6 +33,7 @@ Settings g_settings = {
     .rumble_strength = RUMBLE_STRENGTH_DEFAULT,
     .freecam_sticks = true,
     .stamina_drain = 100,
+    .game_speed = 100,
     .damage_taken = 100,
     .damage_dealt = 100,
     .colour_vision_strength = COLOUR_VISION_STRENGTH_DEFAULT,
@@ -147,6 +148,7 @@ static const char *const k_icons[ICONS_COUNT] = {"auto", "keyboard", "xbox", "pl
 const char *const g_motion_source_keys[MOTION_SOURCE_COUNT] = {"auto", "controller", "dsu", "off"};
 
 static const char *const k_button_layout[BUTTON_LAYOUT_COUNT] = {"auto", "nintendo", "swap_ab", "xbox", "swap_xy", "gamecube"};
+static const char *const k_health_regen[HEALTH_REGEN_COUNT] = {"off", "slow", "normal", "fast"};
 
 static const char *const k_quality[UPQ_COUNT] = {"ultra_quality", "quality", "balanced", "performance", "ultra_performance",
                                                  "native", "dynamic"};
@@ -678,11 +680,15 @@ void settings_load(void) {
         else if (!strcmp(key, "colour_vision_strength")) g_settings.colour_vision_strength = atoi(val);  // (percent)
         else if (!strcmp(key, "god_mode")) g_settings.god_mode = atoi(val) != 0;
         else if (!strcmp(key, "no_fall_damage")) g_settings.no_fall_damage = atoi(val) != 0;
-        else if (!strcmp(key, "menu_text_scale")) {
+        else if (!strcmp(key, "health_regen")) {
+            g_settings.health_regen = HEALTH_REGEN_OFF;
+            for (int i = 0; i < HEALTH_REGEN_COUNT; i++)
+                if (!strcmp(val, k_health_regen[i])) g_settings.health_regen = i;
+            if (val[0] >= '0' && val[0] <= '3' && !val[1]) g_settings.health_regen = val[0] - '0';
+        } else if (!strcmp(key, "game_speed")) {
             int v = atoi(val);
-            g_settings.menu_text_scale = (v >= 85 && v <= 130) ? v : 100;
-        }
-        else if (!strcmp(key, "show_health_numbers")) g_settings.show_health_numbers = atoi(val) != 0;
+            g_settings.game_speed = v < 50 ? 50 : v > 200 ? 200 : v;
+        } else if (!strcmp(key, "show_health_numbers")) g_settings.show_health_numbers = atoi(val) != 0;
         else if (!strcmp(key, "fixed_lod")) g_settings.fixed_lod = atoi(val) != 0;
         else if (!strcmp(key, "one_hit_kill")) g_settings.one_hit_kill = atoi(val) != 0;
         else if (!strcmp(key, "silent_link")) g_settings.silent_link = atoi(val) != 0;
@@ -999,7 +1005,9 @@ bool settings_save_to(const char *path) {
     fprintf(f, "colour_vision_strength = %d\n", g_settings.colour_vision_strength);
     fprintf(f, "god_mode = %d\n", g_settings.god_mode);
     fprintf(f, "no_fall_damage = %d\n", g_settings.no_fall_damage);
-    fprintf(f, "menu_text_scale = %d\n", g_settings.menu_text_scale ? g_settings.menu_text_scale : 100);
+    fprintf(f, "health_regen = %s\n",
+            k_health_regen[g_settings.health_regen >= 0 && g_settings.health_regen < HEALTH_REGEN_COUNT ? g_settings.health_regen : 0]);
+    fprintf(f, "game_speed = %d\n", g_settings.game_speed ? g_settings.game_speed : 100);
     fprintf(f, "show_health_numbers = %d\n", g_settings.show_health_numbers);
     fprintf(f, "fixed_lod = %d\n", g_settings.fixed_lod);
     fprintf(f, "one_hit_kill = %d\n", g_settings.one_hit_kill);
