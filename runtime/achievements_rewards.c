@@ -33,6 +33,7 @@ typedef struct {
 
 static const AchReward k_rewards[] = {
     {"runes", {"Armor_210_Head", "Armor_210_Upper", "Armor_210_Lower"}},        // Cap, Tunic, Trousers of Twilight
+    {"perfect_guard", {"Weapon_Shield_057"}},                                  // Hero's Shield
     {"map_towers", {"Armor_220_Head"}},                                        // Sheik's Mask
     // each Divine Beast's helm, the Champion's figure's own
     {"beast_ruta", {"Armor_181_Head"}},                                        // Vah Ruta Divine Helm

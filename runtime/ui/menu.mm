@@ -1688,6 +1688,27 @@ static void cheats_options(void) {
     opt_section("Link");
     opt_toggle("God mode", &g_settings.god_mode, false,
                "Link takes no damage.");
+    opt_toggle("No fall damage", &g_settings.no_fall_damage, false,
+               "Link takes no damage from falling.");
+    {
+        static const char *const regen_names[HEALTH_REGEN_COUNT] = {"Off", "Slow", "Normal", "Fast"};
+        int r = g_settings.health_regen >= 0 && g_settings.health_regen < HEALTH_REGEN_COUNT ? g_settings.health_regen : 0;
+        if (opt_choice("Health regeneration", &r, regen_names, HEALTH_REGEN_COUNT, HEALTH_REGEN_OFF,
+                       "Link's hearts refill slowly while out of combat.", false))
+            g_settings.health_regen = r;
+    }
+    {
+        static const int speeds[] = GAME_SPEED_CHOICES;
+        static const char *const speed_names[] = {"50%", "75%", "100%", "125%", "150%", "200%"};
+        enum { NS = sizeof speeds / sizeof speeds[0] };
+        int s = 2;
+        for (int i = 0; i < NS; i++) if (g_settings.game_speed == speeds[i]) s = i;
+        if (opt_choice("Game speed", &s, speed_names, NS, 2,
+                       "How fast the game runs in play. 100% is the game's own.", false))
+            g_settings.game_speed = speeds[s];
+    }
+    opt_toggle("Show health on screen", &g_settings.show_health_numbers, false,
+               "Shows Link's exact health and the last damaged enemy's health on screen.");
     {
         static char heart_buf[16];
         if (opt_text("Set hearts", heart_buf, sizeof heart_buf, "",
@@ -3262,6 +3283,50 @@ static void quick_inventory_hint_draw(const ImGuiIO &io) {
 // Everything menu_render draws, in one place: menu_render_needed (the caller's cue to drain the recorder first) and
 // menu_render (which decides again, and drains itself) must agree on it. The pointer's hover box, the console and the
 // gyro drag were missing here: their frames went to the command buffer while the recorder thread was still filling it.
+extern "C" bool assists_health_hud_snapshot(int32_t *link_cur, int32_t *link_max, int32_t *enemy_cur,
+                                            int32_t *enemy_max, float *enemy_fade, uint64_t now_ns);
+
+static void health_overlay_draw(ImGuiIO &io, float scale) {
+    (void)io;
+    int32_t lcur = 0, lmax = 0, ecur = 0, emax = 0;
+    float efade = 0.0f;
+    if (!assists_health_hud_snapshot(&lcur, &lmax, &ecur, &emax, &efade, plat_now_ns())) return;
+    ImGui::SetNextWindowPos(ImVec2(24 * scale, 118 * scale), ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(0.72f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10 * scale, 7 * scale));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    if (ImGui::Begin("##health_overlay", NULL,
+                     ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNav |
+                         ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoFocusOnAppearing)) {
+        ImGui::PushFont(g_menu_font ? g_menu_font : g_font);
+        if (lmax > 0) {
+            float frac = lcur > 0 ? fminf(1.0f, (float)lcur / (float)lmax) : 0.0f;
+            ImGui::TextColored(ImVec4(0.95f, 0.42f, 0.42f, 1.0f), "%s", tr("Link"));
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.86f, 0.24f, 0.26f, 0.95f));
+            ImGui::ProgressBar(frac, ImVec2(120 * scale, 14 * scale), "");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::Text("%.2g / %g (%d/%d)", lcur / 4.0f, lmax / 4.0f, (int)lcur, (int)lmax);
+        }
+        if (efade > 0.01f && emax > 0) {
+            float frac = ecur > 0 ? fminf(1.0f, (float)ecur / (float)emax) : 0.0f;
+            ImGui::TextColored(ImVec4(0.98f, 0.72f, 0.28f, efade), "%s", tr("Enemy"));
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.92f, 0.50f, 0.18f, 0.95f * efade));
+            ImGui::ProgressBar(frac, ImVec2(120 * scale, 14 * scale), "");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, efade), "%d / %d", (int)ecur, (int)emax);
+        }
+        ImGui::PopFont();
+    }
+    ImGui::End();
+    ImGui::PopStyleVar(3);
+}
+
 static bool menu_draws(bool *pointer_hover = NULL, float *pointer_box = NULL, bool *gyro_show = NULL, GyroScene *gyro = NULL) {
     if (int page = g_page_open_request.exchange(-1); page >= 0) {
         extern int g_tab_request_ext;
@@ -3276,7 +3341,8 @@ static bool menu_draws(bool *pointer_hover = NULL, float *pointer_box = NULL, bo
     if (gyro_show) *gyro_show = gyro_on;
     return g_open.load() || g_kbd.load() == 1 || g_sizes.load() || console_is_open() || gyro_on || hover ||
            g_settings.perf_overlay != PERF_OFF || act_log_enabled() || quick_inventory_sort_hint() || quick_drop_hint_state() ||
-           collect_map_shown() || ach_ui_active() || bench_hud_visible() || SDL_GetTicks() < g_notice_until.load();
+           collect_map_shown() || ach_ui_active() || bench_hud_visible() ||
+           (g_settings.show_health_numbers && !framepace_title_ui()) || SDL_GetTicks() < g_notice_until.load();
 }
 
 bool menu_render_needed(void) { return menu_draws(); }
@@ -3362,6 +3428,8 @@ void menu_render(void *cmd, uint32_t target_w, uint32_t target_h) {
     }
 
     if (g_settings.perf_overlay != PERF_OFF) perf_overlay_draw(io, scale);
+    if (!open && !kbd && !sizes && !con && g_settings.show_health_numbers && !framepace_title_ui())
+        health_overlay_draw(io, scale);
     if (!open && !kbd && !sizes && !con && bench_hud_visible()) bench_ui_overlay(io.DisplaySize.x, io.DisplaySize.y, scale);
     ach_ui_toasts(io.DisplaySize.x, io.DisplaySize.y, scale);
     notice_draw(io, scale);

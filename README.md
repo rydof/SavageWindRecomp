@@ -55,13 +55,14 @@ game.
 - Resolutions up to 4K and beyond, and ultrawide
 - Upscaling with NVIDIA DLSS, AMD FSR 3, FSR 4 and FSR 1, and FSR 3 frame generation
 - Graphics presets from Potato, below console quality, to Savage, far beyond it
-- Longer draw distance, sharper shadows, adjustable field of view, colour grading and HDR
+- Longer draw distance, sharper shadows, HBAO, grass ground cover, map zoom blur, native-resolution minimap, Fixed high LOD, adjustable field of view, colour grading and HDR
 - Keyboard and mouse with real mouse camera, and any controller, gyro included (Steam Input, DSU servers, handhelds)
-- Button prompts that match your device
+- Automatic PlayStation, Xbox, Steam Deck, and Switch button prompts with matching live 4-button HUD layout
+- Built-in in-game benchmark (7 routes, cinematic flythroughs, 1%/0.1% lows, frametime graph, CSV/Markdown export)
 - Save profiles, backups, a custom save folder, and Wii U / Cemu save import
 - Steam Deck and PC handhelds, and Add to Steam
 - One-click updates from Savage Wind Configuration
-- Photo mode, colour vision filters, accessibility options, cheats and a teleport
+- Photo mode, colour vision filters, accessibility options (no fall damage, health regeneration, game speed, on-screen health), cheats and a teleport
   ([Cheats and assists](docs/cheats-and-assists.md))
 - Discord Rich Presence (off by default)
 

@@ -1627,3 +1627,10 @@ T("Press Esc to cancel", "Appuyez sur Échap pour annuler")
     {"Keep high-detail models at distance instead of switching to simplified LODs.", "Keep high-detail models at distance instead of switching to simplified LODs."},
     {"Link takes no damage from falling.", "Link takes no damage from falling."},
     {"No fall damage", "No fall damage"},
+T("Enemy", "Ennemi")
+T("Game speed", "Vitesse du jeu")
+T("Health regeneration", "Régénération de santé")
+T("How fast the game runs in play. 100% is the game's own.", "Vitesse du jeu en partie. 100 % correspond à la vitesse d'origine.")
+T("Link's hearts refill slowly while out of combat.", "Les cœurs de Link se remplissent lentement hors combat.")
+T("Show health on screen", "Afficher la santé à l'écran")
+T("Shows Link's exact health and the last damaged enemy's health on screen.", "Affiche à l'écran la santé exacte de Link et celle du dernier ennemi touché.")

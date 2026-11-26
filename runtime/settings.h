@@ -261,8 +261,9 @@ typedef struct {
     int weather;             // WEATHER_COUNT: the game's, rain or thunderstorms kept out, or one weather held (weather.c)
     bool god_mode;           // Link takes no damage
     bool no_fall_damage;     // Link takes no fall damage (assists.c)
-    int menu_text_scale;     // menu text size percent (85, 100, 115, 130)
-    bool show_health_numbers;// show compact health/status badge in play
+    int health_regen;        // HEALTH_REGEN_*: Link's hearts refill slowly out of combat (assists.c)
+    int game_speed;          // percent of game speed in play, 50..200 (assists.c)
+    bool show_health_numbers;// show Link and last-hit enemy health on screen (menu.mm)
     bool fixed_lod;          // keep high-detail LODs at distance (draw_distance.c)
     bool one_hit_kill;       // whatever else takes damage loses all its life at once
     bool silent_link;        // Link's noise channel 1 (whistling and the sounds like it) stays at zero (silent_link.c)
@@ -286,6 +287,9 @@ typedef struct {
     bool menu_tip_seen;  // the start screen's one-time "how to open the menu" note was shown (first PLAY ever)
     bool camera_keep_stealth;  // Gameplay > Keep crouch after camera (runtime/camera_stealth.c)
 } Settings;
+
+enum { HEALTH_REGEN_OFF, HEALTH_REGEN_SLOW, HEALTH_REGEN_NORMAL, HEALTH_REGEN_FAST, HEALTH_REGEN_COUNT };
+#define GAME_SPEED_CHOICES {50, 75, 100, 125, 150, 200}
 
 #define RUMBLE_STRENGTH_MIN 10
 #define RUMBLE_STRENGTH_MAX 100

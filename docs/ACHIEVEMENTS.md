@@ -97,6 +97,7 @@ figure or figure data is involved.
 | Achievement | Reward |
 |---|---|
 | Field Engineer (`runes`) | Cap, Tunic and Trousers of Twilight |
+| Not Today, Thanks (`perfect_guard`) | Hero's Shield |
 | Cartographer (`map_towers`) | Sheik's Mask |
 | Waters Calmed (`beast_ruta`) | Vah Ruta Divine Helm |
 | Fire Quelled (`beast_rudania`) | Vah Rudania Divine Helm |
