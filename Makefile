@@ -898,6 +898,16 @@ test-bloom-scale: $(B)/test_bloom_scale
 
 .PHONY: test-bloom-scale
 
+# Synthetic decision-logic check for the opt-in launch guard (runtime/hle/framepace.c); no runtime link needed.
+$(B)/test_launch_guard: tests/test_launch_guard.c
+	@mkdir -p $(B)
+	$(CC) -O1 -Wall -Wextra -Werror -o $@ $<
+
+test-launch-guard: $(B)/test_launch_guard
+	$(B)/test_launch_guard
+
+.PHONY: test-launch-guard
+
 $(B)/test_audio_mix: tests/test_audio_mix.c runtime/audio_mix.h runtime/settings.h
 	@mkdir -p $(B)
 	$(CC) -O1 -Wall -Wextra -Werror -o $@ $< -lm

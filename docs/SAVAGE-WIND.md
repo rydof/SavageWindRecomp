@@ -865,6 +865,18 @@ Pendiente:
        sin cambios). Aparte, sin relación con esto: a 120 FPS y sin límite el interruptor de suelo con Link encima
        tiembla ~1 cm (el botón, un cuerpo dinámico entre el impulso de su IA, el límite de su guía y el peso de Link;
        medido 9-12 mm de pico a pico con `SAVAGEWIND_PHYS_TICK=0` también); a 60 y 30 no.
+     - Guardia experimental de impulso por encima de 30 FPS: a partir del informe de que el momentum de un windbomb se
+       pierde sin límite de FPS. La actualización de la acción SLIDE del jugador borra el alto de lanzamiento escribiendo
+       actor+0x20bc y actor+0x20c0 (1.9.0 0x7000c92938 / 0x7000c9293c). Por encima de 30 FPS la razón del frame baja
+       de 1 y el temporizador de lanzamiento escalado por delta (actor+0x1844) sigue corriendo.
+       `SAVAGEWIND_LAUNCH_GUARD=1` (opción experimental, **apagada por defecto**: sin la variable o a 0 el juego queda
+       como estaba) cambia esas dos tiendas por `rt_slide_launch_clear` (`runtime/hle/framepace.c`; parches
+       `slide_launch_clear` y `slide_launch_clear_second` en `tools/patches.py`): con la razón < 1 y el temporizador
+       > 0 deja los dos campos como estaban en vez de ponerlos a cero; a 30 FPS y cuando el temporizador acaba (<= 0)
+       hace las dos tiendas del juego. Es un experimento a ciegas sobre ese informe: **el efecto en el juego no está
+       verificado** y no se ha probado que arregle el problema, así que no se dice que el bug esté corregido. Prueba:
+       30, 60, 120 y sin límite, con hacia delante pulsado y soltado, comparando el impulso del windbomb; anotar versión
+       del juego, FPS, GPU/driver, ajustes y el resultado observado.
      - Vsync: Vídeo > Sincronización vertical (ver "VSync y VRR" abajo). Por defecto Rápida (MAILBOX), sin tearing;
        cada refresco muestra la imagen más nueva. Una frecuencia que divide la del monitor (60 en 60/120/240 Hz) es
        la más fluida; una que no (60 o 90 en 144 Hz) alterna 2 y 3 refrescos por imagen; por encima de la del

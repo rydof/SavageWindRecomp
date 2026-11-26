@@ -185,6 +185,10 @@ SITES = [
     Site('surf_contact', 'code', '3941d2a8 36080008/fff8001f bd4066a0 1e202008 5400000d/ff00001f bd403261 1e202028 5400000d/ff00001f', 0),
     Site('surf_boost_remove', 'code', '1e203820 2f00e401 aa1403e1 1e216800 bd003260 0f016680 f94006a0 94000000/fc000000', 0),
     Site('surf_jump_request', 'code', '36000000/fff8001f 52a82608 b9006668 b9008288 52800028 3900a288 2d488680 52800141', 0),
+    # Experimental launch-height guard (tools/patches.py _slide_launch_clear, runtime/hle/framepace.c): the SLIDE
+    # action's two stores of the launch height, one guest update each; the helper takes over both of them.
+    Site('slide_launch_clear', 'code', 'bd20bd00 bd20c100 f9400660 94000000/fc000000 36000000/fff8001f', 0),
+    Site('slide_launch_clear_second', 'code', 'bd20bd00 bd20c100 f9400660 94000000/fc000000 36000000/fff8001f', 1),
     # a stale actor in the target manager (tools/patches.py _stale_actor_helper, _stale_actor_target; #391, #393): the
     # helper that asks an actor for its link, and the camera target's inline copy of it
     Site('stale_actor_helper', 'code', 'b4000000/ff00001f f942b808 f9404500 14000000/fc000000 d65f03c0', 0),
@@ -819,6 +823,8 @@ KNOWN = {
         'surf_contact': 0x70011e9e74,
         'surf_boost_remove': 0x70011e9e94,
         'surf_jump_request': 0x70011ea3d4,
+        'slide_launch_clear': 0x7000c92938,
+        'slide_launch_clear_second': 0x7000c9293c,
         'stale_actor_helper': 0x700120bc40,
         'stale_actor_kind': 0x700120ccdc,
         'stale_actor_target': 0x7000dea400,
