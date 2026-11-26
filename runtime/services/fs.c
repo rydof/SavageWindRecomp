@@ -2174,7 +2174,8 @@ static Service *open_aoc_storage(int index) {
 
 // ------------------------------------------------------------------ host-directory filesystem
 typedef struct { char root[1024]; } HostFs;
-typedef struct { int fd; char path[1100]; uint8_t *patched; uint64_t patched_size; bool written, save_written; } HostFile;  // (written: since its last Flush)
+extern bool bench_save_blocked(void);
+typedef struct { int fd; char path[1100]; uint8_t *patched; uint64_t patched_size; bool written, save_written, ro_guard; } HostFile;  // (written: since its last Flush)
 
 // The game wrote a file of a save (game_data.sav, or caption.sav next to it: Master Mode's mark): the achievements
 // read the save now, as played - before the game may load it back (after Ganon's end it does at once)
@@ -2322,6 +2323,7 @@ static void file(Service *s, IpcReq *req, IpcResp *resp) {
         break;
     }
     case 1: {  // Write(option, offset, size) <- A
+        if (f->ro_guard || bench_save_blocked()) break;
         int64_t off = IN(int64_t, 8), size = IN(int64_t, 16);
         IpcBuf *a = in_buf(req, 0);
         if (strstr(f->path, "savedata"))
@@ -2336,10 +2338,12 @@ static void file(Service *s, IpcReq *req, IpcResp *resp) {
         break;
     }
     case 2:  // Flush
+        if (f->ro_guard || bench_save_blocked()) { f->written = false; break; }
         if (f->written && !flush_later(f->path)) fsync(f->fd);  // (its result unread, as before)
         f->written = false;
         break;
     case 3: {
+        if (f->ro_guard || bench_save_blocked()) break;
         int tries = 0, r;
         while ((r = ftruncate(f->fd, IN(int64_t, 0))) && fs_retry(&tries, "resize", f->path)) {}
         if (r) resp->result = errno_result();
@@ -2436,6 +2440,7 @@ static void filesystem(Service *s, IpcReq *req, IpcResp *resp) {
     int tries = 0, r;
     switch (req->cmd) {
     case 0: {  // CreateFile(option, size)
+        if (bench_save_blocked()) break;
         int fd;
         while ((fd = open(p, O_CREAT | O_EXCL | O_RDWR, 0644)) < 0 && fs_retry(&tries, "create", p)) {}
         if (fd < 0) { resp->result = errno_result(); break; }
@@ -2445,19 +2450,23 @@ static void filesystem(Service *s, IpcReq *req, IpcResp *resp) {
         break;
     }
     case 1:
+        if (bench_save_blocked()) break;
         while ((r = unlink(p)) && fs_retry(&tries, "delete", p)) {}
         if (r) resp->result = errno_result();
         break;
-    case 2: if (mkdir(p, 0755)) resp->result = errno_result(); break;
+    case 2: if (!bench_save_blocked() && mkdir(p, 0755)) resp->result = errno_result(); break;
     case 3:
+        if (bench_save_blocked()) break;
         while ((r = rmdir(p)) && fs_retry(&tries, "delete folder", p)) {}
         if (r) resp->result = errno_result();
         break;
     case 4:
+        if (bench_save_blocked()) break;
         while ((r = rm_rf(p, false)) && fs_retry(&tries, "delete folder", p)) {}
         if (r) resp->result = errno_result();
         break;
     case 5: case 6:
+        if (bench_save_blocked()) break;
         host_path(fs, in_path(req, 1), p2, sizeof p2);
         while ((r = rename(p, p2)) && fs_retry(&tries, "rename", p)) {}
         if (r) resp->result = errno_result();
@@ -2473,11 +2482,24 @@ static void filesystem(Service *s, IpcReq *req, IpcResp *resp) {
     }
     case 8: {  // OpenFile(mode)
         uint32_t mode = IN(uint32_t, 0);
+        bool ro_guard = bench_save_blocked() && (mode & 2);
         int fd;
-        while ((fd = open(p, (mode & 2) ? O_RDWR : O_RDONLY)) < 0 && fs_retry(&tries, "open", p)) {}
+        if (ro_guard) {
+            fd = open(p, O_RDONLY);
+            if (fd < 0) fd = open(
+#ifdef _WIN32
+                "NUL"
+#else
+                "/dev/null"
+#endif
+                , O_RDONLY);
+        } else {
+            while ((fd = open(p, (mode & 2) ? O_RDWR : O_RDONLY)) < 0 && fs_retry(&tries, "open", p)) {}
+        }
         if (fd < 0) { resp->result = errno_result(); break; }
         HostFile *f = calloc(1, sizeof *f);
         f->fd = fd;
+        f->ro_guard = ro_guard;
         strlcpy(f->path, p, sizeof f->path);
         size_t pl = strlen(p);
         f->save_written = (mode & 2) && ((pl >= 13 && !strcmp(p + pl - 13, "game_data.sav")) ||
@@ -2517,7 +2539,7 @@ static void filesystem(Service *s, IpcReq *req, IpcResp *resp) {
     }
     case 10: break;  // Commit
     case 11: case 12: OUT(int64_t, 0) = 0x40000000; resp_size(resp, 8); break;
-    case 13: rm_rf(p, true); break;
+    case 13: if (!bench_save_blocked()) rm_rf(p, true); break;
     case 14: memset(resp->data, 0, 0x20); resp_size(resp, 0x20); break;
     default: LOG("[fs] IFileSystem cmd %u (ok)\n", req->cmd);
     }

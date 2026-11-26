@@ -30,6 +30,75 @@ const BenchRouteInfo *bench_route_info(int i) {
     return (i >= 0 && i < BENCH_ROUTE_COUNT) ? &k_routes[i] : NULL;
 }
 
+typedef struct {
+    float eye[3];
+    float at[3];
+} BenchCamPt;
+
+// 4-keyframe cinematic flythrough paths for each canonical route (world coordinates, 100% live world).
+static const BenchCamPt k_route_cams[BENCH_ROUTE_COUNT][4] = {
+    // 0: Great Plateau — sweeping vista glide over Temple of Time toward Hyrule Field
+    {{{-1055.0f, 265.0f, 1825.0f}, {-980.0f, 248.0f, 1730.0f}},
+     {{-1035.0f, 262.0f, 1795.0f}, {-950.0f, 246.0f, 1705.0f}},
+     {{-1010.0f, 258.0f, 1765.0f}, {-920.0f, 244.0f, 1680.0f}},
+     {{-985.0f,  254.0f, 1735.0f}, {-895.0f, 242.0f, 1655.0f}}},
+    // 1: Kakariko Village — high sweeping pan across village roofs, shrine & waterfall
+    {{{1825.0f, 232.0f, 1005.0f}, {1805.0f, 212.0f, 940.0f}},
+     {{1812.0f, 228.0f,  982.0f}, {1800.0f, 210.0f, 920.0f}},
+     {{1795.0f, 224.0f,  960.0f}, {1795.0f, 208.0f, 900.0f}},
+     {{1780.0f, 220.0f,  940.0f}, {1790.0f, 206.0f, 885.0f}}},
+    // 2: Hyrule Field — low-to-mid cinematic dolly sweep looking toward Hyrule Castle
+    {{{410.0f, 134.0f, 1055.0f}, {320.0f, 130.0f, 920.0f}},
+     {{385.0f, 131.0f, 1025.0f}, {290.0f, 132.0f, 885.0f}},
+     {{360.0f, 128.0f,  995.0f}, {260.0f, 134.0f, 850.0f}},
+     {{335.0f, 126.0f,  965.0f}, {235.0f, 136.0f, 815.0f}}},
+    // 3: Rito Village — sweeping aerial arc around the spire & bridges
+    {{{-3630.0f, 314.0f, -1710.0f}, {-3605.0f, 295.0f, -1765.0f}},
+     {{-3610.0f, 310.0f, -1730.0f}, {-3595.0f, 294.0f, -1780.0f}},
+     {{-3590.0f, 306.0f, -1750.0f}, {-3585.0f, 293.0f, -1795.0f}},
+     {{-3570.0f, 302.0f, -1770.0f}, {-3575.0f, 292.0f, -1810.0f}}},
+    // 4: Hyrule Castle — dramatic sweeping orbit looking up at Castle & Sanctum
+    {{{-275.0f, 268.0f, -385.0f}, {-254.0f, 285.0f, -475.0f}},
+     {{-254.0f, 272.0f, -400.0f}, {-254.0f, 288.0f, -490.0f}},
+     {{-232.0f, 276.0f, -415.0f}, {-254.0f, 290.0f, -505.0f}},
+     {{-212.0f, 280.0f, -430.0f}, {-254.0f, 292.0f, -520.0f}}},
+    // 5: Hateno Village — sweeping pan across hillside homes and windmills
+    {{{3420.0f, 248.0f, 2115.0f}, {3485.0f, 232.0f, 2085.0f}},
+     {{3438.0f, 245.0f, 2100.0f}, {3500.0f, 231.0f, 2075.0f}},
+     {{3455.0f, 242.0f, 2085.0f}, {3515.0f, 230.0f, 2065.0f}},
+     {{3472.0f, 240.0f, 2070.0f}, {3530.0f, 229.0f, 2055.0f}}},
+    // 6: Korok Forest — gliding sweep through Great Deku Tree clearing & foliage
+    {{{445.0f, 260.0f, -2125.0f}, {465.0f, 250.0f, -2060.0f}},
+     {{462.0f, 257.0f, -2110.0f}, {472.0f, 249.0f, -2045.0f}},
+     {{478.0f, 254.0f, -2095.0f}, {480.0f, 248.0f, -2030.0f}},
+     {{495.0f, 252.0f, -2080.0f}, {488.0f, 247.0f, -2015.0f}}},
+};
+
+static float catmull_rom(float p0, float p1, float p2, float p3, float t) {
+    float t2 = t * t, t3 = t2 * t;
+    return 0.5f * ((2.0f * p1) + (-p0 + p2) * t + (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
+                   (-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3);
+}
+
+void bench_eval_route_camera(int route_idx, float t_norm, float out_eye[3], float out_at[3]) {
+    if (!out_eye || !out_at) return;
+    if (route_idx < 0 || route_idx >= BENCH_ROUTE_COUNT) route_idx = 0;
+    if (t_norm < 0.0f) t_norm = 0.0f;
+    if (t_norm > 1.0f) t_norm = 1.0f;
+    float s = t_norm * 3.0f;
+    int i1 = (int)s;
+    if (i1 > 2) i1 = 2;
+    float f = s - (float)i1;
+    int i0 = i1 > 0 ? i1 - 1 : 0;
+    int i2 = i1 + 1;
+    int i3 = i2 + 1 < 4 ? i2 + 1 : 3;
+    const BenchCamPt *pts = k_route_cams[route_idx];
+    for (int k = 0; k < 3; k++) {
+        out_eye[k] = catmull_rom(pts[i0].eye[k], pts[i1].eye[k], pts[i2].eye[k], pts[i3].eye[k], f);
+        out_at[k] = catmull_rom(pts[i0].at[k], pts[i1].at[k], pts[i2].at[k], pts[i3].at[k], f);
+    }
+}
+
 static int cmp_u32(const void *a, const void *b) {
     uint32_t va = *(const uint32_t *)a, vb = *(const uint32_t *)b;
     return (va > vb) - (va < vb);
@@ -172,6 +241,8 @@ size_t bench_format_markdown(const BenchSnapshot *snap, char *buf, size_t n) {
 #ifndef BENCH_STATS_ONLY
 #include <pthread.h>
 #include "control.h"
+#include "framepace.h"
+#include "game_sites.h"
 #include "hle.h"
 #include "nvn/output_scale.h"
 #include "paths.h"
@@ -186,6 +257,7 @@ extern float test_warp_hour(bool *held);
 extern void test_warp_set_hour(float hour);
 extern void test_warp_hold_hour(float hour);
 extern void menu_open_page(int id);
+extern void rt_request_reboot(int kind);
 #ifndef SW_METAL
 extern void renderer_get_scale(float *sx, float *sy);
 #endif
@@ -294,6 +366,11 @@ static int g_orig_perf_overlay;
 static bool g_overrides_saved;
 static bool g_tp_sent;
 static bool g_cancelled_run;
+static bool g_autostart_after_reboot;
+static BenchConfig g_autostart_cfg;
+static bool g_started_outside_save;
+static uint64_t g_launch_pulse_ns;
+static uint64_t g_launch_btn_mask;
 
 static uint32_t g_route_us[BENCH_MAX_FRAMES];
 static uint32_t g_route_frames;
@@ -457,7 +534,8 @@ static void enter_restoring(uint64_t now_ns) {
     g_snap.has_results = g_snap.nresults > 0;
     restore_overrides();
     g_tp_sent = false;
-    if (g_snap.cfg.mode == BENCH_MODE_SPOT) {
+    g_launch_btn_mask = 0;
+    if (g_snap.cfg.mode == BENCH_MODE_SPOT || g_started_outside_save) {
         g_snap.phase = g_cancelled_run ? BENCH_CANCELLED : BENCH_DONE;
         menu_open_page(15);
         return;
@@ -509,18 +587,30 @@ static void finish_measuring_route(uint64_t now_ns, double elapsed_s) {
     else enter_restoring(now_ns);
 }
 
-bool bench_start(const BenchConfig *cfg) {
+bool bench_start_from_menu(const BenchConfig *cfg, bool in_game) {
     if (!cfg) return false;
-    float pos[3];
-    if (!control_tp_link_pos(pos)) return false;
     pthread_mutex_lock(&g_lock);
-    bool busy = (g_snap.phase >= BENCH_TELEPORTING && g_snap.phase <= BENCH_RESTORING) || g_pending_start;
+    bool busy = (g_snap.phase >= BENCH_LAUNCHING && g_snap.phase <= BENCH_RESTORING) || g_pending_start || g_autostart_after_reboot;
     if (!busy) {
-        g_pending_cfg = *cfg;
-        if (g_pending_cfg.duration_s < 3) g_pending_cfg.duration_s = 3;
-        if (g_pending_cfg.duration_s > 60) g_pending_cfg.duration_s = 60;
-        if (g_pending_cfg.settle_s < 1) g_pending_cfg.settle_s = 1;
-        if (g_pending_cfg.settle_s > 20) g_pending_cfg.settle_s = 20;
+        BenchConfig c = *cfg;
+        if (c.duration_s < 3) c.duration_s = 3;
+        if (c.duration_s > 60) c.duration_s = 60;
+        if (c.settle_s < 1) c.settle_s = 1;
+        if (c.settle_s > 20) c.settle_s = 20;
+        if (!in_game) {
+            if (c.mode == BENCH_MODE_SPOT) c.mode = BENCH_MODE_QUICK;
+            g_autostart_cfg = c;
+            g_autostart_after_reboot = true;
+            g_started_outside_save = true;
+            g_snap.started_outside_save = true;
+            pthread_mutex_unlock(&g_lock);
+            rt_request_reboot(1);
+            return true;
+        }
+        float pos[3];
+        g_started_outside_save = framepace_title_ui() || !control_tp_link_pos(pos);
+        g_snap.started_outside_save = g_started_outside_save;
+        g_pending_cfg = c;
         g_pending_start = true;
         g_pending_cancel = false;
     }
@@ -528,11 +618,17 @@ bool bench_start(const BenchConfig *cfg) {
     return !busy;
 }
 
+bool bench_start(const BenchConfig *cfg) {
+    return bench_start_from_menu(cfg, true);
+}
+
 void bench_cancel(void) {
     pthread_mutex_lock(&g_lock);
+    g_autostart_after_reboot = false;
+    g_launch_btn_mask = 0;
     if (g_pending_start) {
         g_pending_start = false;
-    } else if (g_snap.phase >= BENCH_TELEPORTING && g_snap.phase <= BENCH_RESTORING) {
+    } else if (g_snap.phase >= BENCH_LAUNCHING && g_snap.phase <= BENCH_RESTORING) {
         g_pending_cancel = true;
     }
     pthread_mutex_unlock(&g_lock);
@@ -540,13 +636,55 @@ void bench_cancel(void) {
 
 bool bench_active(void) {
     pthread_mutex_lock(&g_lock);
-    bool a = g_snap.phase >= BENCH_TELEPORTING && g_snap.phase <= BENCH_RESTORING;
+    bool a = g_snap.phase >= BENCH_LAUNCHING && g_snap.phase <= BENCH_RESTORING;
     pthread_mutex_unlock(&g_lock);
     return a;
 }
 
 bool bench_hud_visible(void) {
     return bench_active();
+}
+
+bool bench_save_blocked(void) {
+    pthread_mutex_lock(&g_lock);
+    bool b = g_autostart_after_reboot || g_pending_start ||
+             (g_snap.phase >= BENCH_LAUNCHING && g_snap.phase <= BENCH_RESTORING) ||
+             (g_started_outside_save && (g_snap.phase == BENCH_DONE || g_snap.phase == BENCH_CANCELLED));
+    pthread_mutex_unlock(&g_lock);
+    return b;
+}
+
+bool bench_hide_hud(void) {
+    pthread_mutex_lock(&g_lock);
+    bool h = g_snap.phase >= BENCH_TELEPORTING && g_snap.phase <= BENCH_MEASURING;
+    pthread_mutex_unlock(&g_lock);
+    return h;
+}
+
+bool bench_camera_override(float out_eye[3], float out_at[3]) {
+    if (!out_eye || !out_at) return false;
+    pthread_mutex_lock(&g_lock);
+    bool ok = false;
+    if (g_snap.phase == BENCH_AIMING || g_snap.phase == BENCH_SETTLING || g_snap.phase == BENCH_MEASURING) {
+        int ridx = (g_queue_pos >= 0 && g_queue_pos < g_queue_len) ? g_queue[g_queue_pos] : -1;
+        if (ridx >= 0 && ridx < BENCH_ROUTE_COUNT) {
+            float t = 0.0f;
+            if (g_snap.phase == BENCH_MEASURING && g_snap.phase_target_s > 0.0) {
+                t = (float)(g_snap.phase_elapsed_s / g_snap.phase_target_s);
+            }
+            bench_eval_route_camera(ridx, t, out_eye, out_at);
+            ok = true;
+        }
+    }
+    pthread_mutex_unlock(&g_lock);
+    return ok;
+}
+
+void bench_input_apply(uint64_t *b) {
+    if (!b) return;
+    pthread_mutex_lock(&g_lock);
+    if (g_snap.phase == BENCH_LAUNCHING) *b |= g_launch_btn_mask;
+    pthread_mutex_unlock(&g_lock);
 }
 
 void bench_snapshot(BenchSnapshot *out) {
@@ -566,42 +704,44 @@ void bench_frame(uint64_t frame) {
     if (g_pending_start) {
         g_pending_start = false;
         g_cancelled_run = false;
-        if (control_tp_link_pos(g_orig_pos)) {
-            g_orig_hour = test_warp_hour(&g_orig_hour_held);
-            memset(&g_snap.results, 0, sizeof g_snap.results);
-            memset(&g_snap.overall, 0, sizeof g_snap.overall);
-            g_snap.nresults = 0;
-            g_snap.has_results = false;
-            g_snap.live_spark_n = 0;
-            g_snap.live_fps = 0.0f;
-            g_snap.live_ms = 0.0f;
-            g_snap.cfg = g_pending_cfg;
-            g_all_frames = 0;
-            g_all_duration_s = 0.0;
-            capture_metadata();
-            save_and_apply_overrides(&g_snap.cfg);
-            build_route_queue(&g_snap.cfg);
-            start_current_route(now);
-            LOG("[benchmark] started mode=%d routes=%d duration=%ds settle=%ds\n",
-                g_snap.cfg.mode, g_queue_len, g_snap.cfg.duration_s, g_snap.cfg.settle_s);
-        }
+        g_launch_btn_mask = 0;
+        g_launch_pulse_ns = 0;
+        g_orig_hour = test_warp_hour(&g_orig_hour_held);
+        memset(&g_snap.results, 0, sizeof g_snap.results);
+        memset(&g_snap.overall, 0, sizeof g_snap.overall);
+        g_snap.nresults = 0;
+        g_snap.has_results = false;
+        g_snap.live_spark_n = 0;
+        g_snap.live_fps = 0.0f;
+        g_snap.live_ms = 0.0f;
+        g_snap.cfg = g_pending_cfg;
+        g_all_frames = 0;
+        g_all_duration_s = 0.0;
+        capture_metadata();
+        save_and_apply_overrides(&g_snap.cfg);
+        build_route_queue(&g_snap.cfg);
+        snprintf(g_snap.current_route_name, sizeof g_snap.current_route_name, "Preparing");
+        begin_phase(BENCH_LAUNCHING, now, 25.0);
+        LOG("[benchmark] launching mode=%d routes=%d duration=%ds settle=%ds\n",
+            g_snap.cfg.mode, g_queue_len, g_snap.cfg.duration_s, g_snap.cfg.settle_s);
     }
 
     if (g_pending_cancel) {
         g_pending_cancel = false;
+        g_launch_btn_mask = 0;
         if (g_snap.phase == BENCH_RESTORING) {
             restore_overrides();
             g_snap.phase = BENCH_CANCELLED;
             menu_open_page(15);
             LOG("[benchmark] force-cancelled during restore\n");
-        } else if (g_snap.phase >= BENCH_TELEPORTING && g_snap.phase < BENCH_RESTORING) {
+        } else if (g_snap.phase >= BENCH_LAUNCHING && g_snap.phase < BENCH_RESTORING) {
             g_cancelled_run = true;
             LOG("[benchmark] cancelled by user\n");
             enter_restoring(now);
         }
     }
 
-    if (g_snap.phase < BENCH_TELEPORTING || g_snap.phase > BENCH_RESTORING) {
+    if (g_snap.phase < BENCH_LAUNCHING || g_snap.phase > BENCH_RESTORING) {
         pthread_mutex_unlock(&g_lock);
         return;
     }
@@ -613,6 +753,30 @@ void bench_frame(uint64_t frame) {
     int ridx = (g_queue_pos >= 0 && g_queue_pos < g_queue_len) ? g_queue[g_queue_pos] : -1;
 
     switch (g_snap.phase) {
+    case BENCH_LAUNCHING: {
+        g_launch_btn_mask = 0;
+        bool in_title = framepace_title_ui();
+        bool in_loading = framepace_loading_ui();
+        bool in_menu = framepace_menu_ui() || (g_site.pause_state && LD32(g_site.pause_state) != 0);
+        if (in_title) {
+            // Pulse A (bit 0) every 0.8s for 120ms to press Continue on the title screen
+            uint64_t cycle = (now - g_phase_t0_ns) % 800000000ull;
+            if (cycle < 120000000ull) g_launch_btn_mask = (1ull << 0);
+        } else if (in_menu && !in_loading) {
+            // Pulse B (bit 1) every 0.35s for 100ms to close BotW's Pause Menu
+            uint64_t cycle = (now - g_phase_t0_ns) % 350000000ull;
+            if (cycle < 100000000ull) g_launch_btn_mask = (1ull << 1);
+        } else if (!in_loading && control_tp_link_pos(g_orig_pos)) {
+            start_current_route(now);
+            break;
+        }
+        if (elapsed >= 25.0) {
+            record_failed_route(ridx, in_title ? "No save to load" : "World not ready");
+            g_cancelled_run = true;
+            enter_restoring(now);
+        }
+        break;
+    }
     case BENCH_TELEPORTING: {
         if (ridx < 0 || ridx >= BENCH_ROUTE_COUNT) { enter_restoring(now); break; }
         const BenchRouteInfo *r = &k_routes[ridx];
@@ -721,11 +885,20 @@ RT_ON_RESET(bench_reset) {
     g_pending_cancel = false;
     g_tp_sent = false;
     g_cancelled_run = false;
+    g_launch_btn_mask = 0;
     g_prev_frame_ns = 0;
     free(g_all_us);
     g_all_us = NULL;
     g_all_cap = 0;
     g_all_frames = 0;
+    if (g_autostart_after_reboot) {
+        g_autostart_after_reboot = false;
+        g_pending_cfg = g_autostart_cfg;
+        g_pending_start = true;
+    } else {
+        g_started_outside_save = false;
+        g_snap.started_outside_save = false;
+    }
     pthread_mutex_unlock(&g_lock);
 }
 

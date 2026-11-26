@@ -17,6 +17,7 @@ void control_game_frame(uint64_t frame) { (void)frame; }
 void control_place_frame(void) {}
 void bench_frame(void) {}
 bool bench_active(void) { return false; }
+void bench_input_apply(uint64_t *b) { (void)b; }
 void control_tp_frame(void) {}
 
 static int failures, checks;

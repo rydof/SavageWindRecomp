@@ -10833,7 +10833,8 @@ static VkImageView grade_lut(int *n, float dmin[3], float dscale[3]) {
 static bool freecam_hud_drop(Prog *pr, CmdRec *r) {
     (void)r;
     extern bool freecam_active(void);
-    if (!freecam_active()) return false;
+    extern bool bench_hide_hud(void);
+    if (!freecam_active() && !bench_hide_hud()) return false;
     if (!pr->ui) {
         static const uint64_t k[] = {0x1bc7b1e02ba7c8bbull, 0x2efdd8529ca5a423ull,  // (Layout/Common.sblarc)
                                      0x27b9a168fe111c48ull, 0x2b40df38c66b5a98ull, 0x3ed936808eeb6e1full, 0x60671dc59c02b632ull,

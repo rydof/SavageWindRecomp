@@ -70,6 +70,14 @@ void rt_lookat(uint64_t cam) {
     log_cameras(cam);
     float *f = (float *)(uintptr_t)(cam + 0x38);
     if (!view_camera(f)) return;
+    extern bool bench_camera_override(float out_eye[3], float out_at[3]);
+    float beye[3], bat[3];
+    if (bench_camera_override(beye, bat)) {
+        f[0] = beye[0]; f[1] = beye[1]; f[2] = beye[2];
+        f[3] = bat[0];  f[4] = bat[1];  f[5] = bat[2];
+        f[6] = 0; f[7] = 1; f[8] = 0;
+        return;
+    }
     if (!active) {
         memcpy(seen_eye, f, sizeof seen_eye);
         memcpy(seen_at, f + 3, sizeof seen_at);

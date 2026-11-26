@@ -238,8 +238,12 @@ void control_input_frame(uint64_t frame) {
 static int32_t clamp(int32_t v) { return v > 32767 ? 32767 : v < -32767 ? -32767 : v; }
 void control_input_apply(uint64_t *b, int32_t *lx, int32_t *ly, int32_t *rx, int32_t *ry) {
     extern bool bench_active(void);
+    extern void bench_input_apply(uint64_t *b);
     if (!atomic_load_explicit(&enabled, memory_order_relaxed)) {
-        if (bench_active()) control_fly_input(b, lx, ly);
+        if (bench_active()) {
+            bench_input_apply(b);
+            control_fly_input(b, lx, ly);
+        }
         return;
     }
     *b |= atomic_load(&buttons);

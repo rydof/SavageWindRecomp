@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-void bench_ui_tab(bool *want_close);
+void bench_ui_tab(bool in_game, bool *want_close);
 void bench_ui_overlay(float display_w, float display_h, float scale);
 
 #ifdef __cplusplus

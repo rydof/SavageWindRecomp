@@ -24,6 +24,7 @@ enum BenchMode {
 
 typedef enum {
     BENCH_IDLE = 0,
+    BENCH_LAUNCHING,
     BENCH_TELEPORTING,
     BENCH_AIMING,
     BENCH_SETTLING,
@@ -90,6 +91,7 @@ typedef struct {
     float live_spark[BENCH_SPARK_LEN];
     int live_spark_n;
     bool has_results;
+    bool started_outside_save;
     int nresults;
     BenchRouteStats results[BENCH_MAX_RESULTS];
     BenchRouteStats overall;
@@ -103,9 +105,15 @@ int bench_route_count(void);
 const BenchRouteInfo *bench_route_info(int i);
 
 bool bench_start(const BenchConfig *cfg);
+bool bench_start_from_menu(const BenchConfig *cfg, bool in_game);
 void bench_cancel(void);
 bool bench_active(void);
 bool bench_hud_visible(void);
+bool bench_save_blocked(void);
+bool bench_hide_hud(void);
+bool bench_camera_override(float out_eye[3], float out_at[3]);
+void bench_input_apply(uint64_t *b);
+void bench_eval_route_camera(int route_idx, float t_norm, float out_eye[3], float out_at[3]);
 void bench_snapshot(BenchSnapshot *out);
 void bench_frame(uint64_t frame);
 

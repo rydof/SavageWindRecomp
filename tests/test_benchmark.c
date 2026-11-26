@@ -94,10 +94,26 @@ static void test_markdown_and_routes(void) {
     assert(strstr(md, "| **Overall** | **120.0** |") != NULL);
 }
 
+static void test_cinematic_camera_paths(void) {
+    assert(BENCH_LAUNCHING > BENCH_IDLE && BENCH_LAUNCHING < BENCH_TELEPORTING);
+    for (int r = 0; r < bench_route_count(); r++) {
+        float e0[3], a0[3], e1[3], a1[3];
+        bench_eval_route_camera(r, 0.0f, e0, a0);
+        bench_eval_route_camera(r, 1.0f, e1, a1);
+        for (int k = 0; k < 3; k++) {
+            assert(isfinite(e0[k]) && isfinite(a0[k]));
+            assert(isfinite(e1[k]) && isfinite(a1[k]));
+        }
+        float dx = e1[0] - e0[0], dy = e1[1] - e0[1], dz = e1[2] - e0[2];
+        assert(dx * dx + dy * dy + dz * dz > 1.0f);
+    }
+}
+
 int main(void) {
     test_steady_60fps();
     test_spikes_and_hitches();
     test_markdown_and_routes();
-    printf("PASS: bench_compute_stats, hitches, 1%%/0.1%% lows, sparkline, markdown, routes\n");
+    test_cinematic_camera_paths();
+    printf("PASS: bench_compute_stats, hitches, 1%%/0.1%% lows, sparkline, markdown, routes, cinematic camera\n");
     return 0;
 }

@@ -72,7 +72,7 @@ void draw_frametime_graph(const BenchRouteStats *r, float scale) {
 
 }  // namespace
 
-void bench_ui_tab(bool *want_close) {
+void bench_ui_tab(bool in_game, bool *want_close) {
     static int mode = BENCH_MODE_FULL;
     static int single_route = 0;
     static int dur_idx = 1;     // 10 s
@@ -89,12 +89,8 @@ void bench_ui_tab(bool *want_close) {
     opt_begin("##benchmark", scale);
 
     float pos[3];
-    bool in_world = control_tp_link_pos(pos);
-    if (!in_world && !snap.has_results) {
-        ImGui::TextDisabled("%s", tr("Load a save and enter the world to run the benchmark."));
-        opt_end();
-        return;
-    }
+    bool in_world = in_game && control_tp_link_pos(pos);
+    if (!in_world && mode == BENCH_MODE_SPOT) mode = BENCH_MODE_QUICK;
 
     opt_section(tr("Suite setup"));
     static const char *const suite_names[] = {
@@ -126,19 +122,19 @@ void bench_ui_tab(bool *want_close) {
     opt_toggle(tr("Uncap FPS and VSync"), &uncap, true,
                tr("Temporarily turns off Frame rate limit, VSync and Frame generation during measurement, then restores your settings afterwards."));
 
-    bool active = snap.phase >= BENCH_TELEPORTING && snap.phase <= BENCH_RESTORING;
-    if (!in_world) opt_disable_next();
-    if (opt_action(tr("Start benchmark"), active ? tr("Running...") : (in_world ? tr("Start") : tr("In world only")),
+    bool active = snap.phase >= BENCH_LAUNCHING && snap.phase <= BENCH_RESTORING;
+    if (opt_action(tr("Start benchmark"), active ? tr("Running...") : tr("Start"),
                    tr("Runs the selected benchmark suite and returns Link cleanly to his starting position with full results."), true)) {
-        if (!active && in_world) {
+        if (!active) {
             BenchConfig cfg = {mode, single_route, dur_vals[dur_idx], settle_vals[settle_idx], uncap};
-            if (bench_start(&cfg)) {
+            if (bench_start_from_menu(&cfg, in_game)) {
                 notice[0] = 0;
                 selected_row = -1;
                 if (want_close) *want_close = true;
             }
         }
     }
+    ImGui::TextDisabled("Saves are write-protected during the benchmark.");
 
     if (snap.phase == BENCH_CANCELLED && !snap.has_results) {
         ImGui::TextDisabled("%s", tr("Benchmark cancelled."));

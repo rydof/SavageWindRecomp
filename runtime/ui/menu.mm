@@ -3038,7 +3038,7 @@ static void page_body(int id, float scale, bool in_game) {
     case 13: ach_ui_tab(); break;
     case 15: {
         bool close = false;
-        bench_ui_tab(&close);
+        bench_ui_tab(in_game, &close);
         if (close) set_open(false);
         break;
     }
