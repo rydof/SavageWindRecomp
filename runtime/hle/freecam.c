@@ -11,6 +11,7 @@
 #include <SDL3/SDL.h>
 #include <math.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -21,7 +22,7 @@
 #include "../framepace.h"
 #include "../game_sites.h"
 
-static bool active;
+static _Atomic bool active;
 static float eye[3], yaw, pitch;   // yaw around +y from +z, pitch up from the horizon (radians)
 static float seen_eye[3], seen_at[3];
 static bool seen;
@@ -48,7 +49,7 @@ RT_ON_RESET(freecam_reset) {
     pthread_mutex_unlock(&path_mu);
 }
 
-bool freecam_active(void) { return active; }
+bool freecam_active(void) { return atomic_load_explicit(&active, memory_order_relaxed); }
 
 static bool view_camera(const float *f) {
     return (fabsf(f[0]) + fabsf(f[1]) + fabsf(f[2])) > 1.0f && f[7] > 0.5f;  // eye off the origin, up near +y
