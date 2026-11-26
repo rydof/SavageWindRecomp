@@ -1562,3 +1562,6 @@ T("Cutscenes at 16:9", "Ролики в 16:9")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "Сохраняет игровые кат-сцены в формате 16:9 с полосами вместо заполнения более широких или высоких экранов.")
 T("Ground cover", "Покров травы")
 T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "Дальний слой травяного покрова. Выкл.: оставляет только ближние травинки.")
+    {"Ambient occlusion", "Затенение AO"},
+    {"Soft contact shadows in corners and foliage. Off: cleaner, faster.", "Мягкие контактные тени в углах и листве. Выкл.: чище и быстрее."},
+    {"Soft contact shadows in corners and foliage. Off: cleaner image, a little faster.", "Мягкие контактные тени в углах и листве. Выкл.: более чистая картинка, чуть быстрее."},

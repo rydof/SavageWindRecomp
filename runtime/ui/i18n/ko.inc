@@ -1562,3 +1562,6 @@ T("Cutscenes at 16:9", "컷신 16:9 비율 유지")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "인게임 컷신을 더 넓거나 높은 화면에 채우지 않고 레터박스 16:9로 유지합니다.")
 T("Ground cover", "지면 풀")
 T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "원거리 지면 풀 레이어입니다. 끄면 가까운 풀잎만 유지합니다.")
+    {"Ambient occlusion", "앰비언트 오클루전"},
+    {"Soft contact shadows in corners and foliage. Off: cleaner, faster.", "구석과 수풀의 부드러운 접촉 그림자. 끄기: 더 깔끔하고 빠름."},
+    {"Soft contact shadows in corners and foliage. Off: cleaner image, a little faster.", "구석과 수풀의 부드러운 접촉 그림자. 끄기: 더 깔끔한 화면, 약간 더 빠름."},

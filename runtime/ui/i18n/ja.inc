@@ -1562,3 +1562,6 @@ T("Cutscenes at 16:9", "ムービーを16:9で表示")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "ゲーム内ムービーを広い画面や縦長の画面に合わせず、黒帯付きの16:9で表示します。")
 T("Ground cover", "地表の草")
 T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "遠景の地面を覆う草レイヤーです。オフにすると近くの草のみを表示します。")
+    {"Ambient occlusion", "アンビエントオクルージョン"},
+    {"Soft contact shadows in corners and foliage. Off: cleaner, faster.", "角や草木の柔らかい接地影。オフ：くっきりして高速。"},
+    {"Soft contact shadows in corners and foliage. Off: cleaner image, a little faster.", "角や草木の柔らかい接地影。オフ：よりクリアな画面、少し高速。"},

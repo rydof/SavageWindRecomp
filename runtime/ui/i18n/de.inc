@@ -1562,3 +1562,6 @@ T("Cutscenes at 16:9", "Zwischensequenzen in 16:9")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "Hält Zwischensequenzen des Spiels in 16:9 mit Balken, statt breitere oder höhere Bildschirme auszufüllen.")
 T("Ground cover", "Bodenbewuchs")
 T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "Entfernte Gras-Bodenbewuchsschicht. Aus: behält nur nahe Grashalme.")
+    {"Ambient occlusion", "Umgebungsverdeckung"},
+    {"Soft contact shadows in corners and foliage. Off: cleaner, faster.", "Weiche Kontaktschatten in Ecken und Laub. Aus: klarer, schneller."},
+    {"Soft contact shadows in corners and foliage. Off: cleaner image, a little faster.", "Weiche Kontaktschatten in Ecken und Laub. Aus: klareres Bild, etwas schneller."},

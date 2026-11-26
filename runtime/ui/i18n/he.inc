@@ -1561,3 +1561,6 @@ T("Cutscenes at 16:9", "סרטונים ביחס 16:9")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "שומר על סרטוני המשחק ביחס 16:9 עם שוליים במקום למלא מסכים רחבים או גבוהים יותר.")
 T("Ground cover", "כיסוי קרקע")
 T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "שכבת העשב הרחוקה על הקרקע. כבוי: משאיר רק גבעולי עשב קרובים.")
+    {"Ambient occlusion", "הצללת סביבה"},
+    {"Soft contact shadows in corners and foliage. Off: cleaner, faster.", "צללי מגע רכים בפינות ובעלווה. כבוי: נקי ומהיר יותר."},
+    {"Soft contact shadows in corners and foliage. Off: cleaner image, a little faster.", "צללי מגע רכים בפינות ובעלווה. כבוי: תמונה נקייה יותר, קצת יותר מהיר."},

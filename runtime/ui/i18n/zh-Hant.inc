@@ -1562,3 +1562,6 @@ T("Cutscenes at 16:9", "過場動畫保持 16:9")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "將遊戲內過場動畫保持在 16:9 並顯示黑邊，而不鋪滿更寬或更高的螢幕。")
 T("Ground cover", "地表植被")
 T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "遠景地面草被層。關閉：僅保留近處草葉。")
+    {"Ambient occlusion", "環境光遮蔽"},
+    {"Soft contact shadows in corners and foliage. Off: cleaner, faster.", "角落與植被處的柔和接觸陰影。關：畫面更乾淨、更流暢。"},
+    {"Soft contact shadows in corners and foliage. Off: cleaner image, a little faster.", "角落與植被處的柔和接觸陰影。關：畫面更乾淨，稍流暢一些。"},

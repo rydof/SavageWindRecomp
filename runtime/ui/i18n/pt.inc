@@ -1562,3 +1562,6 @@ T("Cutscenes at 16:9", "Cenas em 16:9")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "Mantém as cenas do jogo em 16:9 com barras em vez de preencher telas mais largas ou mais altas.")
 T("Ground cover", "Cobertura do solo")
 T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "Camada distante de grama no solo. Não: mantém apenas as folhas de grama próximas.")
+    {"Ambient occlusion", "Oclusão ambiental"},
+    {"Soft contact shadows in corners and foliage. Off: cleaner, faster.", "Sombras suaves de contato em cantos e folhagem. Não: mais limpo e rápido."},
+    {"Soft contact shadows in corners and foliage. Off: cleaner image, a little faster.", "Sombras suaves de contato em cantos e folhagem. Não: imagem mais limpa, um pouco mais rápido."},

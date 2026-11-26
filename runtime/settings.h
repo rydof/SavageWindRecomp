@@ -227,6 +227,7 @@ typedef struct {
     bool depth_of_field; // the distance blur over far pixels (off: its draw is skipped: vulkan/exec.c)
     bool map_zoom_blur;  // the blur the world map lays over itself as it opens and after each zoom (off: its blend
                          // draws are skipped: vulkan/exec.c)
+    bool ambient_occlusion; // quarter-res HBAO contact shadows (off: AO + blur cleared to 1.0: vulkan/exec.c)
     bool grass;          // grass blades and crossed quads (off: draw_distance.c hides both layers)
     bool grass_quads;    // distant ground-cover layer (crossed quads; off: keeps near grass blades only)
     int grass_distance;  // GRASS_DIST_*: independent grass draw distance (0: follow draw_distance)
