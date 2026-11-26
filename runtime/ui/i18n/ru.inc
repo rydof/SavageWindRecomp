@@ -1560,3 +1560,5 @@ T("Frame rate as set again", "Частота кадров снова как в �
 T("30 fps for a physics puzzle, until pressed again:  F5", "30 кадров/с для физической головоломки, до повторного нажатия:  F5")
 T("Cutscenes at 16:9", "Ролики в 16:9")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "Сохраняет игровые кат-сцены в формате 16:9 с полосами вместо заполнения более широких или высоких экранов.")
+T("Ground cover", "Покров травы")
+T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "Дальний слой травяного покрова. Выкл.: оставляет только ближние травинки.")

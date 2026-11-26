@@ -228,6 +228,7 @@ typedef struct {
     bool map_zoom_blur;  // the blur the world map lays over itself as it opens and after each zoom (off: its blend
                          // draws are skipped: vulkan/exec.c)
     bool grass;          // grass blades and crossed quads (off: draw_distance.c hides both layers)
+    bool grass_quads;    // distant ground-cover layer (crossed quads; off: keeps near grass blades only)
     int grass_distance;  // GRASS_DIST_*: independent grass draw distance (0: follow draw_distance)
     bool lens_flare;     // sun glare / lens flare (off: vulkan/exec.c skips sun occlusion queries)
     bool fast_fma;       // CPUs without FMA instructions (gamelib_compat): the game's fused multiply-adds rounded twice,

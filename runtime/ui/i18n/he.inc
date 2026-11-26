@@ -1559,3 +1559,5 @@ T("Frame rate as set again", "קצב הפריימים שוב כפי שהוגדר
 T("30 fps for a physics puzzle, until pressed again:  F5", "30 fps לחידת פיזיקה, עד לחיצה נוספת:  F5")
 T("Cutscenes at 16:9", "סרטונים ביחס 16:9")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "שומר על סרטוני המשחק ביחס 16:9 עם שוליים במקום למלא מסכים רחבים או גבוהים יותר.")
+T("Ground cover", "כיסוי קרקע")
+T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "שכבת העשב הרחוקה על הקרקע. כבוי: משאיר רק גבעולי עשב קרובים.")

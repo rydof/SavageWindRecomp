@@ -1560,3 +1560,5 @@ T("Frame rate as set again", "อัตราเฟรมกลับเป็�
 T("30 fps for a physics puzzle, until pressed again:  F5", "30 fps สำหรับปริศนาฟิสิกส์ จนกว่าจะกดอีกครั้ง:  F5")
 T("Cutscenes at 16:9", "คัตซีนแบบ 16:9")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "แสดงคัตซีนในเกมที่สัดส่วน 16:9 พร้อมขอบดำแทนการขยายเต็มหน้าจอที่กว้างหรือสูงกว่า")
+T("Ground cover", "หญ้าคลุมดิน")
+T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "ชั้นหญ้าคลุมดินระยะไกล ปิด: แสดงเฉพาะใบหญ้าระยะใกล้")

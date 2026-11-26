@@ -1560,3 +1560,5 @@ T("Frame rate as set again", "フレームレートを設定どおりに戻し�
 T("30 fps for a physics puzzle, until pressed again:  F5", "物理パズル用に30fps（もう一度押すまで）:  F5")
 T("Cutscenes at 16:9", "ムービーを16:9で表示")
 T("Keeps in-engine cutscenes at 16:9 with bars instead of filling wider or taller screens.", "ゲーム内ムービーを広い画面や縦長の画面に合わせず、黒帯付きの16:9で表示します。")
+T("Ground cover", "地表の草")
+T("Distant grass ground-cover layer. Off: keeps near grass blades only.", "遠景の地面を覆う草レイヤーです。オフにすると近くの草のみを表示します。")
