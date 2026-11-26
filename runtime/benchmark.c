@@ -584,6 +584,8 @@ static void finish_measuring_route(uint64_t now_ns, double elapsed_s) {
         st->gpu_load_avg = g_load_n ? (float)(g_load_sum / g_load_n) : -1.0f;
         st->gpu_clock_avg = g_clk_n ? (float)(g_clk_sum / g_clk_n) : -1.0f;
         bench_compute_stats(g_route_us, g_route_frames, elapsed_s, st);
+        LOG("[benchmark] route %s: avg %.1f fps, 1%% low %.1f fps, avg %.2f ms (%u frames)\n",
+            st->name, st->avg_fps, st->low_1pct_fps, st->avg_ms, st->frames);
     }
     // Append to combined buffer for accurate overall percentiles & 1% / 0.1% lows
     if (g_route_frames > 0) {
