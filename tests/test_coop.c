@@ -47,6 +47,26 @@ int main(void) {
     assert(got.outfit_preset == ONLINE_OUTFIT_DARK_LINK);
     assert(fabsf(got.scale - 1.10f) < 1e-5f);
 
+    // 4. online.ini persistence round-trip in /tmp
+    a.name_color[0] = 10; a.name_color[1] = 200; a.name_color[2] = 90;
+    a.outfit_preset = ONLINE_OUTFIT_CUSTOM;
+    a.dye_color = 5;
+    a.scale = 0.92f;
+    snprintf(a.head_actor, sizeof a.head_actor, "Armor_001_Head");
+    online_set_appearance(&a);
+    online_settings_save();
+    OnlineAppearance reset;
+    online_appearance_default(&reset);
+    online_set_appearance(&reset);
+    online_settings_load();
+    online_get_appearance(&got);
+    assert(got.name_color[0] == 10 && got.name_color[1] == 200 && got.name_color[2] == 90);
+    assert(got.outfit_preset == ONLINE_OUTFIT_CUSTOM);
+    assert(got.dye_color == 5);
+    assert(fabsf(got.scale - 0.92f) < 1e-3f);
+    assert(strcmp(got.head_actor, "Armor_001_Head") == 0);
+    remove("online.ini");
+
     printf("PASS: coop-addon default-off state, character creator sanitize, presets, and round-trip\n");
     return 0;
 }

@@ -47,7 +47,7 @@ static volatile float g_local_hour = -1;  // (the local game's hour, from the fr
 #define STALE_NS 3000000000ull     // no state from a player for this long: he isn't shown (his game stopped, or his
                                    // connection is going); the server drops a client after TIMEOUT_NS
 
-enum { M_HELLO = 1, M_WELCOME, M_REJECT, M_STATE, M_JOIN, M_LEAVE, M_CHAT, M_PING, M_PONG, M_EQUIP, M_SKEL, M_TIME, M_ENEMIES, M_HIT, M_ESTATE, M_LOOT_ADD, M_LOOT_TAKE, M_LOOTS, M_QUEST, M_QUESTS, M_PICK };
+enum { M_HELLO = 1, M_WELCOME, M_REJECT, M_STATE, M_JOIN, M_LEAVE, M_CHAT, M_PING, M_PONG, M_EQUIP, M_SKEL, M_TIME, M_ENEMIES, M_HIT, M_ESTATE, M_LOOT_ADD, M_LOOT_TAKE, M_LOOTS, M_QUEST, M_QUESTS, M_PICK, M_APPEARANCE };
 #define ENEMIES_EVERY_NS 100000000ull  // the host's enemies (ENEMIES: centre, count, OnlineEnemy each) this often
 #define TIME_EVERY_NS 2000000000ull  // the host's hour of the day (TIME: a float, 0..24) to everyone this often
 // SKEL: u8 Link's bone count, u8 his bow's, then each bone's rotation (smallest three of its quaternion: 2 bits which
@@ -57,6 +57,11 @@ enum { M_HELLO = 1, M_WELCOME, M_REJECT, M_STATE, M_JOIN, M_LEAVE, M_CHAT, M_PIN
 enum { R_FULL = 1, R_VERSION, R_PASSWORD, R_NAME };
 
 #pragma pack(push, 1)
+typedef struct {
+    uint8_t name_color[3], outfit_preset, dye_color;
+    float scale;
+    char head[48], upper[48], lower[48];
+} WireAppearance;
 typedef struct {
     float pos[3], yaw;
     uint8_t flags;
@@ -200,6 +205,8 @@ typedef struct {
     bool have_last;
     WireEquip equip;
     bool have_equip;
+    WireAppearance app;
+    bool have_app;
     uint64_t heard;  // (when it last sent anything: a client gone without closing is dropped after STALE_NS)
 } SClient;
 
@@ -224,7 +231,7 @@ static void srv_drop(Server *sv, int i) {
         c->used = false;
         srv_broadcast(sv, -1, M_LEAVE, &id, 1, NULL, 0);
     }
-    c->used = c->hello = c->have_last = c->have_equip = false;
+    c->used = c->hello = c->have_last = c->have_equip = c->have_app = false;
     c->rb.n = 0;
 }
 
@@ -254,6 +261,7 @@ static bool srv_message(Server *sv, int i, uint8_t type, const uint8_t *p, int l
             send_msg(c->s, M_JOIN, &ok, 1, o->name, ONLINE_NAME_MAX);
             if (o->have_last) send_msg(c->s, M_STATE, &ok, 1, &o->last, sizeof o->last);
             if (o->have_equip) send_msg(c->s, M_EQUIP, &ok, 1, &o->equip, sizeof o->equip);
+            if (o->have_app) send_msg(c->s, M_APPEARANCE, &ok, 1, &o->app, sizeof o->app);
         }
         srv_broadcast(sv, -1, M_JOIN, &id, 1, c->name, ONLINE_NAME_MAX);  // (the new player too: its own name back)
         LOG("[online] server: %s joined (slot %d)\n", c->name, i);
@@ -271,6 +279,12 @@ static bool srv_message(Server *sv, int i, uint8_t type, const uint8_t *p, int l
         memcpy(&c->equip, p, sizeof c->equip);
         c->have_equip = true;
         srv_broadcast(sv, i, M_EQUIP, &id, 1, &c->equip, sizeof c->equip);
+        break;
+    case M_APPEARANCE:
+        if (len < (int)sizeof(WireAppearance)) return false;
+        memcpy(&c->app, p, sizeof c->app);
+        c->have_app = true;
+        srv_broadcast(sv, i, M_APPEARANCE, &id, 1, &c->app, sizeof c->app);
         break;
     case M_SKEL:
         if (len >= 2 && len <= SKEL_BYTES) srv_broadcast(sv, i, M_SKEL, &id, 1, p, len);
@@ -971,6 +985,10 @@ static bool cl_message(uint8_t type, const uint8_t *p, int len) {
     case M_WELCOME:
         if (len >= 1 && p[0] < ONLINE_MAX) g.id = p[0], g.state = ONLINE_CONNECTED;
         g.status_fmt = g.hosting ? "Hosting" : "Connected";
+        {
+            extern int g_app_dirty;
+            __atomic_store_n(&g_app_dirty, true, __ATOMIC_RELEASE);
+        }
         break;
     case M_REJECT: {
         int why = len ? p[0] : 0;
@@ -1026,6 +1044,27 @@ static bool cl_message(uint8_t type, const uint8_t *p, int len) {
             memcpy(g.r[p[0]].gear, e.gear, sizeof e.gear);
             for (int k = 0; k < 3; k++) g.r[p[0]].armor[k][47] = 0;
             for (int k = 0; k < ONLINE_GEAR; k++) g.r[p[0]].gear[k][47] = 0;
+        }
+        break;
+    case M_APPEARANCE:
+        if (len >= 1 + (int)sizeof(WireAppearance) && p[0] < ONLINE_MAX) {
+            WireAppearance wa;
+            memcpy(&wa, p + 1, sizeof wa);
+            OnlineAppearance a;
+            online_appearance_default(&a);
+            memcpy(a.name_color, wa.name_color, 3);
+            a.outfit_preset = wa.outfit_preset;
+            a.dye_color = wa.dye_color;
+            a.scale = wa.scale;
+            snprintf(a.head_actor, sizeof a.head_actor, "%.*s", 47, wa.head);
+            snprintf(a.upper_actor, sizeof a.upper_actor, "%.*s", 47, wa.upper);
+            snprintf(a.lower_actor, sizeof a.lower_actor, "%.*s", 47, wa.lower);
+            online_appearance_sanitize(&a);
+            extern pthread_mutex_t g_app_mu;
+            extern OnlineAppearance g_peer_appearances[ONLINE_MAX];
+            pthread_mutex_lock(&g_app_mu);
+            g_peer_appearances[p[0]] = a;
+            pthread_mutex_unlock(&g_app_mu);
         }
         break;
     case M_CHAT:
@@ -1306,6 +1345,22 @@ static void *cl_thread(void *arg) {
                 send_msg(s, M_EQUIP, &e, sizeof e, NULL, 0);
             }
         }
+        {
+            extern int g_app_dirty;
+            if (__atomic_exchange_n(&g_app_dirty, false, __ATOMIC_ACQ_REL)) {
+                OnlineAppearance a;
+                online_get_appearance(&a);
+                WireAppearance wa = {0};
+                memcpy(wa.name_color, a.name_color, 3);
+                wa.outfit_preset = a.outfit_preset;
+                wa.dye_color = a.dye_color;
+                wa.scale = a.scale;
+                snprintf(wa.head, sizeof wa.head, "%s", a.head_actor);
+                snprintf(wa.upper, sizeof wa.upper, "%s", a.upper_actor);
+                snprintf(wa.lower, sizeof wa.lower, "%s", a.lower_actor);
+                send_msg(s, M_APPEARANCE, &wa, sizeof wa, NULL, 0);
+            }
+        }
         pthread_mutex_lock(&g.lock);
         char out[4][ONLINE_CHAT_MAX];
         int nout = g.nout;
@@ -1571,8 +1626,9 @@ void online_settings_save(void) {
 
 // ---- Co-op Character Creator (runtime/online.h) ----
 static OnlineAppearance g_local_appearance = {{120, 225, 255}, ONLINE_OUTFIT_LIVE, 0, 1.0f, "", "", ""};
-static OnlineAppearance g_peer_appearances[ONLINE_MAX];
-static pthread_mutex_t g_app_mu = PTHREAD_MUTEX_INITIALIZER;
+OnlineAppearance g_peer_appearances[ONLINE_MAX];
+pthread_mutex_t g_app_mu = PTHREAD_MUTEX_INITIALIZER;
+int g_app_dirty = 0;
 
 void online_appearance_default(OnlineAppearance *out) {
     if (!out) return;
@@ -1625,6 +1681,7 @@ void online_set_appearance(const OnlineAppearance *a) {
     pthread_mutex_lock(&g_app_mu);
     g_local_appearance = clean;
     pthread_mutex_unlock(&g_app_mu);
+    __atomic_store_n(&g_app_dirty, true, __ATOMIC_RELEASE);
 }
 
 void online_get_appearance(OnlineAppearance *out) {
