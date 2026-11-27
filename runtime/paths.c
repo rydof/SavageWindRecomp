@@ -209,10 +209,10 @@ bool rt_user_splash(char *out, size_t n) {
     return false;
 }
 
-// Window / Dock icon: icon.png shipped next to the exe or in the .app (none for a plain source build).
+// Window / Dock icon: icon.png shipped next to the exe or in the .app, or docs/icon/icon_1024.png in a source build.
 void rt_window_icon(SDL_Window *w) {
     char p[1100];
-    if (!rt_resource("icon.png", NULL, p, sizeof p)) return;
+    if (!rt_resource("icon.png", "docs/icon/icon_1024.png", p, sizeof p)) return;
     int iw, ih;
     unsigned char *px = rt_image_rgba(p, &iw, &ih);  // (not SDL_LoadPNG: that is SDL 3.4, the distributions ship 3.2)
     if (!px) return;
