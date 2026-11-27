@@ -162,10 +162,10 @@ jobs:
           - Graphics & QoL: HBAO, grass ground cover, Fixed high LOD, map zoom blur toggle, native-res minimap, cutscenes at 16:9, map completion rate (`#1179`), improved horse controls (`#1172`), 6 GB NVIDIA BDA fix (`#1177`), 4K quick-menu stall fix (`#1176`), symmetric high-FPS windbomb glide fix (`#1183`), F1 choice-row fix (`#1182`)
           - Optional Co-op Add-on (`coop` packages only): off by default, LAN/online multiplayer with Character Creator (`OnlineAppearance` persistence + `M_APPEARANCE` live sync)
           EOF
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" * --clobber
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$TAG" * --repo "${{ github.repository }}" --clobber
           else
-            gh release create "$TAG" * \
+            gh release create "$TAG" * --repo "${{ github.repository }}" \
               --title "Savage Wind Enhanced & Co-op ($TAG)" \
               --notes-file /tmp/release_notes.md \
               --prerelease
