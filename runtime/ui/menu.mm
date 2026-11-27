@@ -3232,7 +3232,7 @@ static void health_overlay_draw(ImGuiIO &io, float scale) {
     int32_t lcur = 0, lmax = 0, ecur = 0, emax = 0;
     float efade = 0.0f;
     if (!assists_health_hud_snapshot(&lcur, &lmax, &ecur, &emax, &efade, plat_now_ns())) return;
-    ImGui::SetNextWindowPos(ImVec2(24 * scale, 118 * scale), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(24 * scale, io.DisplaySize.y * 0.21f), ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.72f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10 * scale, 7 * scale));
@@ -3369,7 +3369,7 @@ void menu_render(void *cmd, uint32_t target_w, uint32_t target_h) {
     }
 
     if (g_settings.perf_overlay != PERF_OFF) perf_overlay_draw(io, scale);
-    if (!open && !kbd && !sizes && !con && g_settings.show_health_numbers && !framepace_title_ui())
+    if (!open && !kbd && !sizes && !con && g_settings.show_health_numbers && !framepace_title_ui() && !framepace_menu_ui())
         health_overlay_draw(io, scale);
     if (!open && !kbd && !sizes && !con && bench_hud_visible()) bench_ui_overlay(io.DisplaySize.x, io.DisplaySize.y, scale);
     if (!open && !kbd && !sizes && !con && online_overlay_wanted()) online_overlay_draw(scale, menu_ui_fonts().body);
