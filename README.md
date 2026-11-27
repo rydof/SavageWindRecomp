@@ -13,6 +13,11 @@
 (Nintendo Switch, version 1.9.0) into a native application for Windows and Linux, built from your own copy of the
 game.
 
+> [!NOTE]
+> **Fork notice:** This is a community fork of [Revivedx/SavageWindRecomp](https://github.com/Revivedx/SavageWindRecomp),
+> built on top of **0.6.0-alpha.6** (`test` branch / Beta 1, upstream commit
+> [`184cc9e`](https://github.com/Revivedx/SavageWindRecomp/commit/184cc9e)).
+
 <p align="center">
   <img src="https://i.imgur.com/BaTJyr9.jpg" alt="Screenshot of Savage Wind" width="24%">
   <img src="https://i.imgur.com/USibLkg.jpg" alt="Screenshot of Savage Wind" width="24%">
