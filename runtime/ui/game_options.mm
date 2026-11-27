@@ -2196,6 +2196,10 @@ static const char *const k_f1_controls[] = {"Button icons", "HUD button layout",
                                             "Vertical motion sensitivity", "Invert motion", "Lean to turn",
                                             "Shrine keyboard gyro", "Shrine mouse drag"};
 static const char *const k_f1_access[] = {"Colour vision", "Correction strength"};
+// (the assists: every player's, so the Gameplay page and not Cheats, which is developer mode only)
+static const char *const k_f1_assists[] = {"God mode", "No fall damage", "Health regeneration", "Game speed",
+                                           "Show health on screen", "Damage taken", "Infinite stamina", "Stamina drain",
+                                           "One-hit kill", "Damage dealt", "Weapon wear", "Infinite arrows"};
 
 static void f1_item_row(const Item &it) {
     const char *desc = it.desc_fn ? it.desc_fn(it) : it.desc;
@@ -2205,8 +2209,10 @@ static void f1_item_row(const Item &it) {
     } else if (it.kind == KIND_CHOICE) {
         int n = it.count(it), v = it.get(it);
         if (n <= 0) return;
+        std::vector<std::string> text((size_t)n);
+        for (int i = 0; i < n; i++) text[(size_t)i] = it.label(it, i);
         std::vector<const char *> names((size_t)n);
-        for (int i = 0; i < n; i++) names[(size_t)i] = it.label(it, i);
+        for (int i = 0; i < n; i++) names[(size_t)i] = text[(size_t)i].c_str();
         bool changed;
         if (it.value_off) {
             std::unique_ptr<bool[]> avail(new bool[(size_t)n]);
@@ -2220,11 +2226,17 @@ static void f1_item_row(const Item &it) {
     }
 }
 
-// which: 0 Gameplay, 1 Controls, 2 Accessibility (colour vision)
+// which: 0 Gameplay, 1 Controls, 2 Accessibility (colour vision), 3 Accessibility (the assists)
 void game_items_f1_rows(int which) {
     ensure_items();
-    const char *const *titles = which == 0 ? k_f1_gameplay : which == 1 ? k_f1_controls : k_f1_access;
-    size_t n = which == 0 ? std::size(k_f1_gameplay) : which == 1 ? std::size(k_f1_controls) : std::size(k_f1_access);
+    const char *const *titles = which == 0   ? k_f1_gameplay
+                                : which == 1 ? k_f1_controls
+                                : which == 2 ? k_f1_access
+                                             : k_f1_assists;
+    size_t n = which == 0   ? std::size(k_f1_gameplay)
+               : which == 1 ? std::size(k_f1_controls)
+               : which == 2 ? std::size(k_f1_access)
+                            : std::size(k_f1_assists);
     int page = which == 0 ? P_GAMEPLAY : which == 1 ? P_CONTROLS : P_ACCESS;
     for (size_t t = 0; t < n; t++)  // (in this list's order)
         for (const Item &it : g_items)
