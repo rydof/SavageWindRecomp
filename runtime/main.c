@@ -475,6 +475,7 @@ int main(int argc, char **argv) {
     if (sparse_heap < 0 || sparse_heap >= SPARSE_HEAP_COUNT) sparse_heap = SPARSE_HEAP_AUTO;
     LOG("[settings] sparse_heap=%s\n", sparse_heap_modes[sparse_heap]);
     online_settings_load();
+    if (getenv("SAVAGEWIND_ONLINE_AUTOJOIN") && atoi(getenv("SAVAGEWIND_ONLINE_AUTOJOIN")) != 0) online_join();
     if (cmd) {
         if (cli_owns_args(cmd)) return cli_run(cmd, argc - 2, argv + 2);
         if (!strcmp(cmd, "setup")) return launcher_setup_cli(root, cmd_src[0] ? cmd_src : NULL, json);

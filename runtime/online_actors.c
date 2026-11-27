@@ -1838,6 +1838,12 @@ static void sample_pose(Cpu *c, uint64_t pinfo) {
         int32_t d = VALID(player) ? *(int32_t *)(uintptr_t)(player + 0x1114 + 4 * k) : -1;
         pose.dye[k] = d >= 0 && d < 128 ? (int8_t)d : -1;
     }
+    {
+        OnlineAppearance app;
+        online_get_appearance(&app);
+        if (app.dye_color > 0)
+            for (int k = 0; k < 3; k++) pose.dye[k] = (int8_t)app.dye_color;
+    }
     {   // his Link's ELink property values (its user instance +0x70, ONLINE_FX_PROPS words: the player's ELink,
         // Player_GameRom, has that many; its containers choose what to play by them, a charge's level and the like)
         uint64_t ui = elink_ui(player), pv = VALID(ui) ? *(uint64_t *)(uintptr_t)(ui + 0x70) : 0;
