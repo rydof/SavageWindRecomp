@@ -796,7 +796,7 @@ void bench_frame(uint64_t frame) {
         bool in_dlc = framepace_dlc_ui();
         bool in_title = framepace_title_ui();
         bool in_loading = framepace_loading_ui();
-        bool has_link = control_tp_link_pos(g_orig_pos);
+        bool has_link = !in_dlc && !in_title && !in_loading && control_tp_link_pos(g_orig_pos);
         bool in_menu = framepace_menu_ui() || (g_site.pause_state && LD32(g_site.pause_state) != 0);
         if (in_loading) {
             // Don't let save/world loading eat the title-screen launch timeout.
@@ -807,10 +807,11 @@ void bench_frame(uint64_t frame) {
             uint64_t cycle = (now - g_phase_t0_ns) % 1000000000ull;
             if (cycle < 120000000ull) g_launch_btn_mask = (1ull << 1);  // BTN_B
         } else if (in_title || (!has_link && in_menu)) {
-            // Title screen and its Continue/save-slot confirmation dialogs: press A, never B.
+            // Title screen and Continue/save-slot dialogs: press A; every 6th beat press B in case a DLC/Options sub-screen is open.
             g_world_ready_ns = 0;
+            uint64_t slot = (now - g_phase_t0_ns) / 800000000ull;
             uint64_t cycle = (now - g_phase_t0_ns) % 800000000ull;
-            if (cycle < 120000000ull) g_launch_btn_mask = (1ull << 0);  // BTN_A
+            if (cycle < 120000000ull) g_launch_btn_mask = ((slot % 6) == 5) ? (1ull << 1) : (1ull << 0);
         } else if (in_menu && has_link) {
             g_world_ready_ns = 0;
             uint64_t slot = (now - g_phase_t0_ns) / 350000000ull;

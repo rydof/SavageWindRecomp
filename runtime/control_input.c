@@ -246,6 +246,7 @@ void control_input_apply(uint64_t *b, int32_t *lx, int32_t *ly, int32_t *rx, int
         }
         return;
     }
+    if (bench_active()) bench_input_apply(b);
     *b |= atomic_load(&buttons);
     if (!lx) { control_fly_input(b, NULL, NULL); return; }
     int32_t *x[] = {lx, rx}, *y[] = {ly, ry};
