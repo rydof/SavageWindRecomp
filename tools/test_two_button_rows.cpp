@@ -30,6 +30,8 @@ const char *const g_gpreset_names[GPRESET_COUNT] = {"Potato", "Original", "High"
 const char *problem_report_make(void) { abort(); }
 void menu_request_window_apply(void) { abort(); }
 void winsize_name(WinSize, const char *, char *, int) { abort(); }
+void hdr_look_store(int) {}
+void ach_info(int, AchInfo *) {}
 // PE resolves unused UI references before discarding their sections. These unrelated
 // services must never be called by this routing test, on either test platform.
 #ifdef _WIN32

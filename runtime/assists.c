@@ -190,3 +190,7 @@ bool assists_health_hud_snapshot(int32_t *link_cur, int32_t *link_max, int32_t *
     if (enemy_fade) *enemy_fade = fade;
     return lm > 0 || fade > 0.0f;
 }
+// The map's completion rate (tools/patches.py _map_clear_rate): the map screen asks the game whether the save has the
+// GameClear flag and hides its rate block when the answer is no. With the option on the answer is 1, so the rate shows
+// before the game is cleared.
+int rt_map_clear_rate(void) { return g_settings.map_clear_rate; }

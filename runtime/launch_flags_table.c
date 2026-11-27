@@ -20,6 +20,7 @@ const LfInfo LF_TABLE[] = {
     {"SAVAGEWIND_AUDIO_WAV", LF_KIND_TEXT, LF_GROUP_DEV, "", ""},
     {"SAVAGEWIND_AUDOUT_WAV", LF_KIND_TEXT, LF_GROUP_DEV, "", ""},
     {"SAVAGEWIND_BC5_UNORM", LF_KIND_SWITCH, LF_GROUP_OTHER, "", ""},
+    {"SAVAGEWIND_BENCH_AUTOSTART", LF_KIND_TEXT, LF_GROUP_OTHER, "", ""},
     {"SAVAGEWIND_BIND_TEST", LF_KIND_NUMBER, LF_GROUP_LAUNCHER, "", "Test input that replaces the keyboard and controller."},
     {"SAVAGEWIND_BLOOM_SCALED", LF_KIND_SWITCH, LF_GROUP_OTHER, "", ""},
     {"SAVAGEWIND_CACHE_DIR", LF_KIND_TEXT, LF_GROUP_OTHER, "", ""},
@@ -144,6 +145,7 @@ const LfInfo LF_TABLE[] = {
     {"SAVAGEWIND_GAME_MEMORY_MB", LF_KIND_TEXT, LF_GROUP_OTHER, "", ""},
     {"SAVAGEWIND_GAME_OPTIONS_SCREEN", LF_KIND_NUMBER, LF_GROUP_PLAY, "1", "The game's Options and Achievements buttons open its own Options screen instead of the Savage Wind menu."},
     {"SAVAGEWIND_GEN", LF_KIND_TEXT, LF_GROUP_BUILD, "", "The program that builds the game code."},
+    {"SAVAGEWIND_GLIDE_DECAY", LF_KIND_NUMBER, LF_GROUP_OTHER, "", ""},
     {"SAVAGEWIND_GLYPH_DUMP", LF_KIND_SWITCH, LF_GROUP_DEV, "", ""},
     {"SAVAGEWIND_GPU", LF_KIND_TEXT, LF_GROUP_PLAY, "auto", "Which graphics card to use: a number, part of its name, or auto."},
     {"SAVAGEWIND_GPUPROF_AT", LF_KIND_TEXT, LF_GROUP_DEV, "", ""},
@@ -182,10 +184,13 @@ const LfInfo LF_TABLE[] = {
     {"SAVAGEWIND_LAUNCHER_EXTRACT", LF_KIND_TEXT, LF_GROUP_LAUNCHER, "", "Test hook of the start screen."},
     {"SAVAGEWIND_LAUNCHER_FONT", LF_KIND_TEXT, LF_GROUP_LAUNCHER, "", "Test hook of the start screen."},
     {"SAVAGEWIND_LAUNCHER_MODE", LF_KIND_TEXT, LF_GROUP_LAUNCHER, "", "Test hook of the start screen."},
+    {"SAVAGEWIND_LAUNCHER_PRESS_PLAY", LF_KIND_NUMBER, LF_GROUP_LAUNCHER, "", "Test hook of the start screen."},
     {"SAVAGEWIND_LAUNCHER_SETUP", LF_KIND_TEXT, LF_GROUP_LAUNCHER, "", "Test hook of the start screen."},
     {"SAVAGEWIND_LAUNCHER_SHOT", LF_KIND_NUMBER, LF_GROUP_LAUNCHER, "", "Test hook of the start screen."},
     {"SAVAGEWIND_LAUNCHER_SWMM_GO", LF_KIND_TEXT, LF_GROUP_LAUNCHER, "", "Test hook of the start screen."},
+    {"SAVAGEWIND_LAUNCHER_TIP_GO", LF_KIND_TEXT, LF_GROUP_LAUNCHER, "", "Test hook of the start screen."},
     {"SAVAGEWIND_LAUNCH_FLAGS_APPLIED", LF_KIND_TEXT, LF_GROUP_INTERNAL, "", "Remembers which launch options this run started with."},
+    {"SAVAGEWIND_LAUNCH_GUARD", LF_KIND_NUMBER, LF_GROUP_OTHER, "", ""},
     {"SAVAGEWIND_LOAD_WATCH", LF_KIND_NUMBER, LF_GROUP_DEV, "", ""},
     {"SAVAGEWIND_LOD_MIN", LF_KIND_NUMBER, LF_GROUP_OTHER, "", ""},
     {"SAVAGEWIND_LOG_APPEND", LF_KIND_TEXT, LF_GROUP_DEV, "", ""},
@@ -559,4 +564,4 @@ const LfInfo LF_TABLE[] = {
     {"SAVAGEWIND_XLATE_VERIFY", LF_KIND_TEXT, LF_GROUP_DEV, "", ""},
     {"SAVAGEWIND_YAZ0", LF_KIND_NUMBER, LF_GROUP_OTHER, "", ""},
 };
-const int LF_TABLE_N = 555;
+const int LF_TABLE_N = 560;
