@@ -607,6 +607,14 @@ static void finish_measuring_route(uint64_t now_ns, double elapsed_s) {
     else enter_restoring(now_ns);
 }
 
+bool bench_in_field(void) {
+    if (!g_site.world_mgr) return false;
+    uint64_t world = *(uint64_t *)(uintptr_t)g_site.world_mgr;
+    return world >= GUEST_LO && world < GUEST_HI && 0x7da <= GUEST_HI - world &&
+           *(uint8_t *)(uintptr_t)(world + 0x7d9) &&
+           *(uint32_t *)(uintptr_t)(world + 0x6b8) == 1;
+}
+
 bool bench_start_from_menu(const BenchConfig *cfg, bool in_game) {
     if (!cfg) return false;
     pthread_mutex_lock(&g_lock);
@@ -628,7 +636,12 @@ bool bench_start_from_menu(const BenchConfig *cfg, bool in_game) {
             return true;
         }
         float pos[3];
-        g_started_outside_save = framepace_title_ui() || !control_tp_link_pos(pos);
+        bool in_world = !framepace_title_ui() && control_tp_link_pos(pos);
+        if (in_world && c.mode != BENCH_MODE_SPOT && !bench_in_field()) {
+            pthread_mutex_unlock(&g_lock);
+            return false;
+        }
+        g_started_outside_save = !in_world;
         g_snap.started_outside_save = g_started_outside_save;
         g_pending_cfg = c;
         g_pending_start = true;
@@ -746,7 +759,7 @@ void bench_frame(uint64_t frame) {
         save_and_apply_overrides(&g_snap.cfg);
         build_route_queue(&g_snap.cfg);
         snprintf(g_snap.current_route_name, sizeof g_snap.current_route_name, "Preparing");
-        begin_phase(BENCH_LAUNCHING, now, 25.0);
+        begin_phase(BENCH_LAUNCHING, now, 60.0);
         LOG("[benchmark] launching mode=%d routes=%d duration=%ds settle=%ds\n",
             g_snap.cfg.mode, g_queue_len, g_snap.cfg.duration_s, g_snap.cfg.settle_s);
     }
@@ -783,32 +796,46 @@ void bench_frame(uint64_t frame) {
         bool in_dlc = framepace_dlc_ui();
         bool in_title = framepace_title_ui();
         bool in_loading = framepace_loading_ui();
+        bool has_link = control_tp_link_pos(g_orig_pos);
         bool in_menu = framepace_menu_ui() || (g_site.pause_state && LD32(g_site.pause_state) != 0);
-        if (in_dlc) {
+        if (in_loading) {
+            // Don't let save/world loading eat the title-screen launch timeout.
+            if (dt_ns > 0) g_phase_t0_ns += dt_ns;
+            g_world_ready_ns = 0;
+        } else if (in_dlc) {
             g_world_ready_ns = 0;
             uint64_t cycle = (now - g_phase_t0_ns) % 1000000000ull;
             if (cycle < 120000000ull) g_launch_btn_mask = (1ull << 1);  // BTN_B
-        } else if (in_title) {
+        } else if (in_title || (!has_link && in_menu)) {
+            // Title screen and its Continue/save-slot confirmation dialogs: press A, never B.
             g_world_ready_ns = 0;
             uint64_t cycle = (now - g_phase_t0_ns) % 800000000ull;
             if (cycle < 120000000ull) g_launch_btn_mask = (1ull << 0);  // BTN_A
-        } else if (in_menu && !in_loading) {
+        } else if (in_menu && has_link) {
             g_world_ready_ns = 0;
             uint64_t slot = (now - g_phase_t0_ns) / 350000000ull;
             uint64_t cycle = (now - g_phase_t0_ns) % 350000000ull;
             if (cycle < 100000000ull) {
                 g_launch_btn_mask = (slot & 1) ? (1ull << 10) : (1ull << 1);  // alternate BTN_B and BTN_PLUS
             }
-        } else if (!in_loading && control_tp_link_pos(g_orig_pos)) {
+        } else if (has_link) {
             if (!g_world_ready_ns) g_world_ready_ns = now;
             if (now - g_world_ready_ns >= 1500000000ull) {
+                if (g_snap.cfg.mode != BENCH_MODE_SPOT && !bench_in_field()) {
+                    record_failed_route(ridx, "Save is inside a shrine or dungeon; exit to Hyrule to benchmark world routes");
+                    g_cancelled_run = true;
+                    enter_restoring(now);
+                    break;
+                }
                 start_current_route(now);
                 break;
             }
         } else {
             g_world_ready_ns = 0;
         }
-        if (elapsed >= 25.0) {
+        elapsed = (double)(now - g_phase_t0_ns) / 1e9;
+        g_snap.phase_elapsed_s = elapsed;
+        if (elapsed >= 60.0) {
             record_failed_route(ridx, in_title ? "No save to load" : "World not ready");
             g_cancelled_run = true;
             enter_restoring(now);

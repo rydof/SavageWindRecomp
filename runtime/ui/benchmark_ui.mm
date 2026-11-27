@@ -123,9 +123,14 @@ void bench_ui_tab(bool in_game, bool *want_close) {
                tr("Temporarily turns off Frame rate limit, VSync and Frame generation during measurement, then restores your settings afterwards."));
 
     bool active = snap.phase >= BENCH_LAUNCHING && snap.phase <= BENCH_RESTORING;
-    if (opt_action(tr("Start benchmark"), active ? tr("Running...") : tr("Start"),
+    bool indoor_block = in_world && !bench_in_field() && mode != BENCH_MODE_SPOT;
+    if (indoor_block) {
+        ImGui::TextColored(ImVec4(0.95f, 0.72f, 0.30f, 1.0f), "%s",
+                           tr("You are inside a shrine or dungeon. Exit to Hyrule for world routes, or select Current spot."));
+    }
+    if (opt_action(tr("Start benchmark"), active ? tr("Running...") : indoor_block ? tr("Exit to Hyrule") : tr("Start"),
                    tr("Runs the selected benchmark suite and returns Link cleanly to his starting position with full results."), true)) {
-        if (!active) {
+        if (!active && !indoor_block) {
             BenchConfig cfg = {mode, single_route, dur_vals[dur_idx], settle_vals[settle_idx], uncap};
             if (bench_start_from_menu(&cfg, in_game)) {
                 notice[0] = 0;

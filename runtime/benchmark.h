@@ -106,6 +106,7 @@ const BenchRouteInfo *bench_route_info(int i);
 
 bool bench_start(const BenchConfig *cfg);
 bool bench_start_from_menu(const BenchConfig *cfg, bool in_game);
+bool bench_in_field(void);
 void bench_cancel(void);
 bool bench_active(void);
 bool bench_hud_visible(void);

@@ -1622,6 +1622,8 @@ T("Measuring...", "Замер...")
 T("Restoring position...", "Возврат на позицию...")
 T("Press Esc to cancel", "Нажмите Esc для отмены")
     {"Saves are write-protected during the benchmark.", "Saves are write-protected during the benchmark."},
+    {"You are inside a shrine or dungeon. Exit to Hyrule for world routes, or select Current spot.", "You are inside a shrine or dungeon. Exit to Hyrule for world routes, or select Current spot."},
+    {"Exit to Hyrule", "Exit to Hyrule"},
     {"Fixed high LOD", "Fixed high LOD"},
     {"Keep high-detail models at distance instead of switching to simplified LODs.", "Keep high-detail models at distance instead of switching to simplified LODs."},
     {"Link takes no damage from falling.", "Link takes no damage from falling."},
