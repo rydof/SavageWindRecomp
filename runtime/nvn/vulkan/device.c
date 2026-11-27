@@ -3731,6 +3731,8 @@ void ui_window_init(void) {
     if (window) return;
     atexit(quick_exit_handler);
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+    SDL_SetHint(SDL_HINT_APP_ID, "savagewind");
+    SDL_SetAppMetadata("Savage Wind", NULL, "savagewind");
     settings_load();
     { extern void motion_before_sdl_init(void); motion_before_sdl_init(); }  // (hle/motion.c: Steam Input's hidden pads)
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) FATAL("SDL_Init: %s\n", SDL_GetError());
