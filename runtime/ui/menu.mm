@@ -1518,6 +1518,8 @@ static void tab_display(void) {
     opt_toggle("Ambient occlusion", &g_settings.ambient_occlusion, true, "Soft contact shadows in corners and foliage. "
                "Off: cleaner image, a little faster.");
     opt_toggle("Grass", &g_settings.grass, true, "Grass blades and ground cover. Off: bare terrain, faster.");
+    opt_toggle("Fixed high LOD", &g_settings.fixed_lod, false,
+               "Keep high-detail models at distance instead of switching to simplified LODs.");
     {
         static const char *const gd_names[GRASS_DIST_COUNT] = {"Follow draw distance", "Potato", "Original", "Medium", "High"};
         opt_indent(1);
