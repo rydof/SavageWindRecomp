@@ -1503,6 +1503,7 @@ bool online_camera_get(double vp[16], float *ysign, uint64_t *age_ns) {
 // ------------------------------------------------------------------ settings (online.ini)
 static void name_from_env(void);
 
+static OnlineAppearance g_local_appearance;
 void online_settings_load(void) {
     const char *u = getenv("USERNAME");
     if (!u || !*u) u = getenv("USER");
@@ -1523,7 +1524,17 @@ void online_settings_load(void) {
         else if (!strcmp(key, "collide")) g_online.collide = atoi(val) != 0;
         else if (!strcmp(key, "revive")) g_online.revive = atoi(val) != 0;
         else if (!strcmp(key, "nopause")) g_online.nopause = atoi(val) != 0;
+        else if (!strcmp(key, "name_color_r")) g_local_appearance.name_color[0] = (uint8_t)atoi(val);
+        else if (!strcmp(key, "name_color_g")) g_local_appearance.name_color[1] = (uint8_t)atoi(val);
+        else if (!strcmp(key, "name_color_b")) g_local_appearance.name_color[2] = (uint8_t)atoi(val);
+        else if (!strcmp(key, "outfit_preset")) g_local_appearance.outfit_preset = (uint8_t)atoi(val);
+        else if (!strcmp(key, "dye_color")) g_local_appearance.dye_color = (uint8_t)atoi(val);
+        else if (!strcmp(key, "scale")) g_local_appearance.scale = (float)atof(val);
+        else if (!strcmp(key, "head_actor")) snprintf(g_local_appearance.head_actor, sizeof g_local_appearance.head_actor, "%s", val);
+        else if (!strcmp(key, "upper_actor")) snprintf(g_local_appearance.upper_actor, sizeof g_local_appearance.upper_actor, "%s", val);
+        else if (!strcmp(key, "lower_actor")) snprintf(g_local_appearance.lower_actor, sizeof g_local_appearance.lower_actor, "%s", val);
     }
+    online_appearance_sanitize(&g_local_appearance);
     fclose(f);
     name_from_env();
 }
@@ -1547,9 +1558,14 @@ void online_settings_save(void) {
     if (!f) return;
     fprintf(f, "# Savage Wind online settings (Settings > Online in game)\n");
     fprintf(f, "name = %s\nhost = %s\nport = %d\npassword = %s\nshow_names = %d\nshow_markers = %d\npvp = %d\n"
-               "collide = %d\nrevive = %d\nnopause = %d\n",
+               "collide = %d\nrevive = %d\nnopause = %d\n"
+               "name_color_r = %u\nname_color_g = %u\nname_color_b = %u\noutfit_preset = %u\n"
+               "dye_color = %u\nscale = %.2f\nhead_actor = %s\nupper_actor = %s\nlower_actor = %s\n",
             g_online.name, g_online.host, g_online.port, g_online.password, g_online.show_names, g_online.show_markers,
-            g_online.pvp, g_online.collide, g_online.revive, g_online.nopause);
+            g_online.pvp, g_online.collide, g_online.revive, g_online.nopause,
+            g_local_appearance.name_color[0], g_local_appearance.name_color[1], g_local_appearance.name_color[2],
+            g_local_appearance.outfit_preset, g_local_appearance.dye_color, g_local_appearance.scale,
+            g_local_appearance.head_actor, g_local_appearance.upper_actor, g_local_appearance.lower_actor);
     fclose(f);
 }
 

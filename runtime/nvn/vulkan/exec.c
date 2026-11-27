@@ -44,6 +44,7 @@
 #include "dlss.h"
 #include "../output_scale.h"
 #include "../../game_sites.h"
+#include "../../online.h"
 #include "../../framepace.h"
 #include "../../services/fs_layout.h"
 #include "../../perfcount.h"
@@ -11242,8 +11243,8 @@ static void fg_before_draw(void) {
 }
 
 static void fg_draw(Prog *pr, CmdRec *r) {
-    if (!g_fg_want && !dlss_wanted() && !rt_xess()) return;  // (DLSS's and XeSS's camera vectors: dlss_scene and
-                                                             //  fsr3_scene's XeSS branch make them the same way)
+    bool camera_only = !g_fg_want;
+    if (camera_only && !dlss_wanted() && !rt_xess() && !online_wants_camera()) return;
     if (st.rt.depth && vk_texture_scale_group(st.rt.depth) == RS_SCENE) {
         Range u = st.ubuf[0][0];
         const float *f = (const float *)(uintptr_t)u.addr;
@@ -11438,6 +11439,14 @@ int vk_fg_generate(NvnTexture *t, TexBackend *b, TexBackend **gens) {
     uint64_t now = SDL_GetTicksNS();
     float frame_ms = fg.last_ns ? (float)((now - fg.last_ns) / 1e6) : 16.7f;
     fg.last_ns = now;
+    if (online_wants_camera() && fg.ncand) {  // this frame's scene camera for the online overlay (the most drawn with)
+        int c = 0;
+        for (int i = 1; i < fg.ncand; i++)
+            if (fg.cand[i].draws > fg.cand[c].draws) c = i;
+        double v[16];
+        for (int i = 0; i < 16; i++) v[i] = fg.cand[c].m[12 + i];
+        online_camera_set(v, renderer_origin_lower_left() ? 1.0f : -1.0f);
+    }
     int ngen = 0;
     TexBackend *scene = fg.scene && same ? vk_tex(fg.scene, true) : NULL;
     int best = scene ? cam_best(scene->width, scene->height) : -1;

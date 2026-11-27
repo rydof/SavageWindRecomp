@@ -1574,6 +1574,21 @@ static void sample_pose(Cpu *c, uint64_t pinfo) {
             if (!strncmp(an[k], "Armor_Default", 13)) an[k][0] = 0;
         }
         for (int k = 0; k < ONLINE_GEAR; k++) actor_name_of(gear[k], gn[k]);
+        {
+            OnlineAppearance app;
+            online_get_appearance(&app);
+            if (app.outfit_preset == ONLINE_OUTFIT_CUSTOM) {
+                if (app.head_actor[0]) snprintf(an[0], sizeof an[0], "%s", app.head_actor);
+                if (app.upper_actor[0]) snprintf(an[1], sizeof an[1], "%s", app.upper_actor);
+                if (app.lower_actor[0]) snprintf(an[2], sizeof an[2], "%s", app.lower_actor);
+            } else if (app.outfit_preset != ONLINE_OUTFIT_LIVE) {
+                const char *h = "", *u = "", *l = "";
+                online_appearance_preset_actors(app.outfit_preset, &h, &u, &l);
+                if (h && *h) snprintf(an[0], sizeof an[0], "%s", h);
+                if (u && *u) snprintf(an[1], sizeof an[1], "%s", u);
+                if (l && *l) snprintf(an[2], sizeof an[2], "%s", l);
+            }
+        }
         online_set_local_equip((const char (*)[48])an, (const char (*)[48])gn);
     }
     float bm[BONES][12];

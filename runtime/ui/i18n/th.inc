@@ -1721,3 +1721,4 @@ T("Show health on screen", "แสดงพลังชีวิตบนหน�
 T("Shows Link's exact health and the last damaged enemy's health on screen.", "แสดงพลังชีวิตที่แน่นอนของลิงก์และศัตรูตัวล่าสุดที่โจมตีบนหน้าจอ")
 T("Show the map completion rate", "แสดงเปอร์เซ็นต์แผนที่")
 T("The map's completion percentage shows before the game is cleared.", "เปอร์เซ็นต์ความสำเร็จของแผนที่จะแสดงก่อนจบเกม")
+T("Combat", "การต่อสู้")

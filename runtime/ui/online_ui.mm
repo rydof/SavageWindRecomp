@@ -259,6 +259,15 @@ extern "C" void online_overlay_draw(float scale, ImFont *font) {
     online_players(pl);
     int me = online_local_id();
 
+    auto player_col = [&](int id, float *out_scale) -> ImU32 {
+        OnlineAppearance app;
+        bool ok = (id == me) ? (online_get_appearance(&app), true) : online_player_appearance(id, &app);
+        if (out_scale) *out_scale = ok ? app.scale : 1.0f;
+        if (ok && (app.name_color[0] || app.name_color[1] || app.name_color[2]))
+            return IM_COL32(app.name_color[0], app.name_color[1], app.name_color[2], 255);
+        return k_colors[id];
+    };
+
     // the players: left, under the hearts
     {
         float x = 24 * scale, y = io.DisplaySize.y * 0.30f;
@@ -271,7 +280,7 @@ extern "C" void online_overlay_draw(float scale, ImFont *font) {
         y += fs * 1.0f;
         for (int i = 0; i < ONLINE_MAX; i++) {
             if (!pl[i].used) continue;
-            dl->AddCircleFilled(ImVec2(x + fs * 0.25f, y + fs * 0.38f), fs * 0.2f, k_colors[i]);
+            dl->AddCircleFilled(ImVec2(x + fs * 0.25f, y + fs * 0.38f), fs * 0.2f, player_col(i, NULL));
             snprintf(t, sizeof t, "%s%s", pl[i].name, pl[i].flags & ONLINE_F_PAUSED ? tr(" (paused)") : "");
             dl->AddText(font, fs * 0.75f, ImVec2(x + fs * 0.6f + 1, y + 1), IM_COL32(0, 0, 0, 180), t);
             dl->AddText(font, fs * 0.75f, ImVec2(x + fs * 0.6f, y), i == me ? IM_COL32(255, 255, 255, 240) : IM_COL32(220, 216, 205, 220), t);
@@ -318,18 +327,20 @@ extern "C" void online_overlay_draw(float scale, ImFont *font) {
         char t[96];
         if (dist < 1000) snprintf(t, sizeof t, "%s  %.0f m", p.name, dist);
         else snprintf(t, sizeof t, "%s  %.1f km", p.name, dist / 1000);
+        float pscale = 1.0f;
+        ImU32 pcol = player_col(i, &pscale);
         if (visible) {
-            float h = fabsf(sf.y - sh.y);
+            float h = fabsf(sf.y - sh.y) * pscale;
             if (h > 2 && !online_has_actor(i)) {
                 if (!project(vp, ysign, dir, size, &sd, &wd)) sd = sf;
                 // (close to the camera a figure would cover the screen: it fades out from 35% of the height)
                 float a = p.flags & ONLINE_F_PAUSED ? 0.45f : 0.9f, big = (h - size.y * 0.35f) / (size.y * 0.3f);
                 if (big > 0) a *= fmaxf(0.0f, 1 - big);
-                if (a > 0.02f) figure(dl, sf, sh, sd, with_alpha(k_colors[i], a), h);
+                if (a > 0.02f) figure(dl, sf, sh, sd, with_alpha(pcol, a), h);
             }
             if (g_online.show_names) {
                 float ls = fs * fminf(fmaxf(h / 120, 0.7f), 1.1f);
-                label(dl, font, ls, ImVec2(sh.x, sh.y - 6 * scale), k_colors[i], t);
+                label(dl, font, ls, ImVec2(sh.x, sh.y - 6 * scale), pcol, t);
             }
         } else {  // out of view: an arrow at the screen's edge, towards them
             ImVec2 d(sf.x - centre.x, sf.y - centre.y);
@@ -342,8 +353,8 @@ extern "C" void online_overlay_draw(float scale, ImFont *font) {
             ImVec2 at(centre.x + d.x * k, centre.y + d.y * k);
             float s = 16 * scale;
             dl->AddTriangleFilled(ImVec2(at.x + d.x * s * 1.6f, at.y + d.y * s * 1.6f),
-                                  ImVec2(at.x - d.y * s, at.y + d.x * s), ImVec2(at.x + d.y * s, at.y - d.x * s), k_colors[i]);
-            if (g_online.show_names) label(dl, font, fs * 0.75f, ImVec2(at.x - d.x * s * 1.5f, at.y - d.y * s * 1.5f), k_colors[i], t);
+                                  ImVec2(at.x - d.y * s, at.y + d.x * s), ImVec2(at.x + d.y * s, at.y - d.x * s), pcol);
+            if (g_online.show_names) label(dl, font, fs * 0.75f, ImVec2(at.x - d.x * s * 1.5f, at.y - d.y * s * 1.5f), pcol, t);
         }
     }
 }

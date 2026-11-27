@@ -1721,3 +1721,4 @@ T("Show health on screen", "Показывать здоровье на экра�
 T("Shows Link's exact health and the last damaged enemy's health on screen.", "Показывает на экране точное здоровье Линка и последнего раненого врага.")
 T("Show the map completion rate", "Показывать процент карты")
 T("The map's completion percentage shows before the game is cleared.", "Процент завершения карты показывается до прохождения игры.")
+T("Combat", "Бой")
