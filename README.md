@@ -1,11 +1,11 @@
 <p align="center"><img src="docs/media/banner.png" alt="Savage Wind" width="640"></p>
 
 <p align="center">
-  <a href="https://github.com/Revivedx/SavageWindRecomp/releases/latest"><b>Download</b></a> ·
+  <a href="https://github.com/rydof/SavageWindRecomp/releases/latest"><b>Download</b></a> ·
   <a href="#get-started">Get started</a> ·
   <a href="docs/STATUS.md">Status</a> ·
   <a href="docs/FAQ.md">FAQ</a> ·
-  <a href="https://github.com/Revivedx/SavageWindRecomp/issues">Issues</a> ·
+  <a href="https://github.com/rydof/SavageWindRecomp/issues">Issues</a> ·
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
@@ -15,8 +15,8 @@ game.
 
 > [!NOTE]
 > **Fork notice:** This is a community fork of [Revivedx/SavageWindRecomp](https://github.com/Revivedx/SavageWindRecomp),
-> built on top of **0.6.0-alpha.6** (`test` branch / Beta 1, upstream commit
-> [`184cc9e`](https://github.com/Revivedx/SavageWindRecomp/commit/184cc9e)).
+> based on upstream's **Beta 1** (`test` branch, commit
+> [`184cc9e`](https://github.com/Revivedx/SavageWindRecomp/commit/184cc9e), succeeding `0.6.0-alpha.6`).
 
 <p align="center">
   <img src="https://i.imgur.com/BaTJyr9.jpg" alt="Screenshot of Savage Wind" width="24%">
@@ -41,17 +41,12 @@ game.
 > can simply ignore this project.
 
 > [!WARNING]
-> **This is an alpha.** The whole game can be finished from start to end, and as of Alpha 6 no known bug stops you
-> from progressing, but expect bugs and crashes in some places, and some mechanics that break above 30 fps
+> **This is a beta.** The whole game can be finished from start to end with no known progression-blocking bugs,
+> though expect occasional bugs or crashes in some places, and some mechanics that break above 30 fps
 > ([#425](https://github.com/Revivedx/SavageWindRecomp/issues/425)). If a cutscene freezes or breaks, lower the frame
 > rate to 30 fps for that scene.
 >
-> **Please read the [FAQ](docs/FAQ.md) before asking** about game file formats, mod support or testing. Many great
-> contributors help out, but every review, approval and release test is done by one person with limited hardware.
->
-> **Alpha 7 will take longer than usual:** development slows down a bit while GTA VI comes out. Game-breaking bugs
-> still get quick fixes first, and bug reports and pull requests stay welcome. We're still on track for the **Beta
-> within the next month**, which will focus on full mod support and more quality-of-life options.
+> **Please read the [FAQ](docs/FAQ.md) before asking** about game file formats, mod support or testing.
 
 ## Features
 
@@ -77,11 +72,11 @@ game.
 GPU with Vulkan 1.3, 8 GB of RAM (16 GB with integrated graphics), a 4-thread CPU with SSE4.2 (AVX2 runs faster) and
 about 20 GB of free disk space.
 
-1. Download the latest build from [Releases](https://github.com/Revivedx/SavageWindRecomp/releases/latest):
-   - **Windows:** the file ending in `windows.zip`. Extract it to a folder you can write to, not Program Files.
+1. Download the latest build from [Releases](https://github.com/rydof/SavageWindRecomp/releases/latest) (available in
+   **enhanced** single-player and **coop** multiplayer builds):
+   - **Windows:** the file ending in `windows-x64.zip`. Extract it to a folder you can write to, not Program Files.
    - **Linux and Steam Deck:** the file ending in `x86_64.AppImage`. Make it executable and run it
      ([docs/linux.md](docs/linux.md)).
-   - **Linux on ARM:** the file ending in `aarch64.AppImage`. It is highly experimental.
 2. Start it and choose the folder with your extracted game (`exefs/` and `romfs/`). Then choose **Set up game files**.
    It checks the version, copies the files and recompiles the game code once, about 15 minutes on a 12-thread CPU.
    Your own files aren't changed.
@@ -107,7 +102,7 @@ weather, teleporting and the virtual amiibo reader: how to use them in [Cheats a
 
 ## Mods
 
-Since Alpha 7, Savage Wind loads mods from the `mods` folder next to it, with a **Mods** tab to turn them on and set
+Savage Wind loads mods from the `mods` folder next to it, with a **Mods** tab to turn them on and set
 their order. Mods are other people's work: Savage Wind doesn't check, test or support them,
 and isn't responsible for what they do, including if they break the game or your saves. Back up your saves before
 trying one. Releases never include mods. In the future we may point to mods we've found to play well with Savage Wind.
@@ -143,8 +138,8 @@ Every action can be rebound in the game's Options. All the keys: [Controls](docs
 ## Found a bug?
 
 Read the [FAQ](docs/FAQ.md) first: issues about something it already covers are closed right away. Use the latest
-release and game version 1.9.0, search the [existing issues](https://github.com/Revivedx/SavageWindRecomp/issues?q=is%3Aissue),
-and [open one](https://github.com/Revivedx/SavageWindRecomp/issues/new/choose) with your `savagewind.log`. On a crash
+release and game version 1.9.0, search the [existing issues](https://github.com/rydof/SavageWindRecomp/issues?q=is%3Aissue),
+and [open one](https://github.com/rydof/SavageWindRecomp/issues/new/choose) with your `savagewind.log`. On a crash
 or a cutscene bug, attach your zipped `save` folder too. Reports without these are closed after 24 hours. Turn every
 mod off and check that the bug still happens. A bug that goes away without mods belongs in
 [SWMM+'s issues](https://github.com/Revivedx/SWMMPlus/issues), where it's narrowed down to the mod at fault.
