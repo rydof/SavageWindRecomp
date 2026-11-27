@@ -1659,7 +1659,8 @@ static void tab_audio(void) {
 
 // Cheats: what hands the player things or changes the world (the game's own menus keep to options and assists, so
 // these are only here). The same as the developer console commands next to them (rupees: runtime/rupees.c;
-// weather: runtime/weather.c). Free sprint: runtime/free_sprint.c. Sure-footed horse, menu only: runtime/sure_footed.c.
+// weather: runtime/weather.c). Free sprint: runtime/free_sprint.c. Improved horse controls, menu only:
+// runtime/improved_horse.c and runtime/sure_footed.c.
 // The assists (God mode, damage, stamina, weapon wear, arrows: runtime/assists.c) are every player's, on the Gameplay
 // page (tab_gameplay), not here: Cheats is developer mode only. The hour is the console's `time`
 // (runtime/services/test_warp.c), the blood moon its `bloodmoon` (runtime/blood_moon.c).
@@ -1767,9 +1768,9 @@ static void cheats_options(void) {
     }
 
     opt_section("Travel");
-    opt_toggle("Sure-footed horse", &g_settings.sure_footed, false,
-               "A running horse no longer stops dead and rears when it runs into something."
-               " It no longer stops at cliff edges either.");
+    opt_toggle("Improved horse controls", &g_settings.improved_horse, false,
+               "The horse answers the stick at once, small nudges included, and turns sharper at a canter and gallop"
+               " without losing speed. It no longer stops dead and rears when it runs into something, or at cliff edges.");
 }
 
 // Case-insensitive: does s contain needle (an empty needle matches)

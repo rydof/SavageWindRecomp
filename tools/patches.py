@@ -548,6 +548,29 @@ def _slide_launch_clear(gen, a):
 def _slide_launch_clear_second(gen, a):
     assert _word(gen, a) == 0xbd20c100, hex(_word(gen, a))  # str s0, [x8, #0x20c0]
     return f'  /* {a:#x}: str s0, [x8, #0x20c0]: cleared with +0x20bc by rt_slide_launch_clear */'
+# Experimental glide decay (runtime/hle/framepace.c rt_glide_overspeed_dec). The paraglider's stick-gated update
+# subtracts its OverSpeedDec parameter from velocity +0x181c (0x7000c866f0) or +0x1824 (0x7000c867b4) once per guest
+# update with no time step, so above 30 fps a windbomb launch loses its momentum too soon. The two sites hold the same
+# fsub word; the store word in their patterns tells them apart. The helper takes s0 (v, v[0]) and s1 (dec, v[1]) as its
+# FP arguments and writes the result back into s0; no other register or the stack changes. The fadd mirrors are patched
+# separately below, with the same register/store contract.
+def _glide_overspeed_dec(gen, a):
+    assert _word(gen, a) == 0x1e213800, hex(_word(gen, a))  # fsub s0, s0, s1
+    return ('{ extern float rt_glide_overspeed_dec(float, float); '
+            'union { uint32_t u; float f; } v = { .u = (uint32_t)c->v[0] }, d = { .u = (uint32_t)c->v[1] }; '
+            'v.f = rt_glide_overspeed_dec(v.f, d.f); c->v[0] = v.u; }'
+            f'  /* {a:#x}: fsub s0, s0, s1 (glide OverSpeedDec) */')
+
+
+# The fadd mirrors of the two glide sites (runtime/hle/framepace.c rt_glide_overspeed_add). With a non-positive target
+# the guest adds OverSpeedDec rather than subtracting it (1.9.0 0x7000c86718 / 0x7000c867dc). Same s0/s1 contract as
+# the fsub patches; only the asserted opcode changes. The shared store after the branch persists c->v[0], untouched.
+def _glide_overspeed_add(gen, a):
+    assert _word(gen, a) == 0x1e212800, hex(_word(gen, a))  # fadd s0, s0, s1
+    return ('{ extern float rt_glide_overspeed_add(float, float); '
+            'union { uint32_t u; float f; } v = { .u = (uint32_t)c->v[0] }, d = { .u = (uint32_t)c->v[1] }; '
+            'v.f = rt_glide_overspeed_add(v.f, d.f); c->v[0] = v.u; }'
+            f'  /* {a:#x}: fadd s0, s0, s1 (glide OverSpeedDec) */')
 
 
 # Experimental shield-surf takeoff grace (#305), runtime/hle/framepace.c. Preserve the original FP subtraction
@@ -1274,15 +1297,19 @@ def _battle_info(which):
         return (f'{{ extern void rt_battle_info(int, int32_t); {load} rt_battle_info({which}, (int32_t)c->x[8]); }}'
                 f'  /* {a:#x}: the battle info\'s count (enemies in battle: Cheats) */')
     return patch
-# Cheats > Sure-footed horse (runtime/sure_footed.c): every frame the horse's update (1.9.0 0x70006afe4c; x1 of its
-# checks is its state: the gear at +0x34) asks two checks whether to stop the horse (new gear 0). The crash check
-# (0x70006b16c4), only at the top gear (4), looks at what the horse's Body touches: a steep face ahead, higher than the
-# horse can step, is a crash, flagged (+0x3ac bit 15) for the animation picker (0x70006b26bc) to play Crash. Without a
-# crash, the stop check (0x70006b19c8) stops a horse at the top gear when its look-ahead (0x70006b4218, as far as the
-# gear and speed carry it) finds the way blocked: a tree, a rock, a cliff edge; at lower gears it stops only a horse
-# nothing drives. The picker plays Courbette for a stop from gear 3 or 4. Both rears are the long stop at an obstacle;
-# with the option on, the crash check reads gear 0 and the look-ahead finds the way clear, so no obstacle stops a
-# horse, and the stop check's other stop stays the game's.
+# Cheats > Improved horse controls, its stops (runtime/sure_footed.c): every frame the horse's update (1.9.0
+# 0x70006afe4c; x1 of its checks is its state: the gear at +0x34, the gear it just picked at +0x38) asks two checks
+# whether to stop the horse (new gear 0). The crash check (0x70006b16c4), only at the top gear (4), looks at what the
+# horse's Body touches: a steep face ahead, higher than the horse can step, is a crash, flagged (+0x3ac bit 15) for
+# the animation picker (0x70006b26bc) to play Crash. Without a crash, the stop check (0x70006b19c8) overrules a picked
+# gear above 0 for what lies ahead, stopping a horse or keeping a standing one still. The horse's probe rays
+# (0x70006b0eac) end in the state's hit flags, and when the one at +0x1c4 finds nothing (the step ahead too high for
+# it, as at a big root, or no ground: a cliff edge) the check stops (or holds) the horse at any gear but the top one;
+# at the top gear it stops it only when its look-ahead (0x70006b4218, as far as the gear and speed carry it) also
+# finds the way blocked. The picker plays Courbette for a stop from gear 3 or 4, and Dislike (a short rear) for a stop
+# within half a second of a spur. A stop the rider asks for (pulling back) comes from the gear the update picks, not
+# from these checks. With the option on, the crash check reads gear 0 and the stop check answers "keep going", so no
+# obstacle stops a horse at any gear.
 
 def _horse_crash(gen, a):
     assert _word(gen, a) == 0xb9403428, hex(_word(gen, a))  # ldr w8, [x1, #0x34]
@@ -1290,10 +1317,42 @@ def _horse_crash(gen, a):
             f'  /* {a:#x}: ldr w8, [x1, #0x34] (the horse\'s gear at its crash check: Cheats) */')
 
 
-def _horse_look_ahead(gen, a):
-    assert _word(gen, a) == _sub_sp(0x170), hex(_word(gen, a))
-    return ('{ extern int rt_sure_footed(void); if (rt_sure_footed()) { c->x[0] = 1; return; } c->sp -= 0x170; }'
-            f'  /* {a:#x}: sub sp, sp, #0x170 (the horse\'s look-ahead: the way clear with Cheats) */')
+def _horse_stop_check(gen, a):
+    assert _word(gen, a) == 0xb940382a, hex(_word(gen, a))  # ldr w10, [x1, #0x38]
+    return ('{ extern int rt_sure_footed(void); if (rt_sure_footed()) { c->x[0] = 0; return; }'
+            ' c->x[10] = LD32(c->x[1] + 0x38); }'
+            f'  /* {a:#x}: ldr w10, [x1, #0x38] (the horse\'s stop check: no stop with Cheats) */')
+
+
+# Cheats > Improved horse controls, its steering (runtime/improved_horse.c). The ridden horse's update (1.9.0
+# 0x70006afe4c, x0 the riding action) runs its stick through smoothers that take the frame's delta: the lean
+# (+0x268) is the rider's steering (the turn at +0x278 and the term at +0x290 are the horse's own: roads, obstacles).
+# Its steering scales the stick by a per-gear table first (0x70006b1cf4: half at the top gear). The runtime sets the
+# lean's rates in the action at the update's entry and answers the table load. The steering then stores the horse's
+# play rate in its unit (0x70006b218c, +0x154): the runtime raises it while the horse turns, so the turning run keeps
+# the straight run's speed.
+
+def _horse_ride(gen, a):
+    assert _word(gen, a) == _sub_sp(0x280), hex(_word(gen, a))
+    return ('{ extern void rt_horse_ride(uint64_t); rt_horse_ride(c->x[0]); c->sp -= 0x280; }'
+            f'  /* {a:#x}: sub sp, sp, #0x280 (the ridden horse\'s update: its steering rates) */')
+
+
+def _horse_stick_scale(gen, a):
+    # s0 holds the stick's x (loaded from [x19, #0x18] just before), multiplied by s1 next
+    assert _word(gen, a) == 0xbc697901, hex(_word(gen, a))  # ldr s1, [x8, x9, lsl #2]
+    return ('{ extern float rt_horse_stick_scale(int64_t, float, float *); union { uint32_t u; float f; } r = '
+            '{ .u = LD32(c->x[8] + (c->x[9] << 2)) }, s = { .u = (uint32_t)c->v[0] }; '
+            'r.f = rt_horse_stick_scale((int64_t)c->x[9], r.f, &s.f); c->v[0] = s.u; c->v[1] = r.u; }'
+            f'  /* {a:#x}: ldr s1, [x8, x9, lsl #2] (the stick\'s share of the horse\'s steering for its gear) */')
+
+
+def _horse_play_rate(gen, a):
+    # x8: the horse's unit (the steering's [x19]), x20: the riding action; s0 the value stored
+    assert _word(gen, a) == 0xbd015500, hex(_word(gen, a))  # str s0, [x8, #0x154]
+    return ('{ extern float rt_horse_play_rate(uint64_t, float); union { uint32_t u; float f; } r = '
+            '{ .u = (uint32_t)c->v[0] }; r.f = rt_horse_play_rate(c->x[20], r.f); ST32(c->x[8] + 0x154, r.u); }'
+            f'  /* {a:#x}: str s0, [x8, #0x154] (the ridden horse\'s rate while it steers) */')
 
 
 # Adding items (runtime/items.c rt_item_tick): at the entry of Link's damage handling (every frame in play, on the game
@@ -1435,6 +1494,19 @@ def _place_icon(gen, a):
             f'  /* {a:#x}: ldr w8, [x19, #0x3c] (map markers: Cheats > Map) */')
 
 
+# The map's completion rate (tools/game_sites.py map_clear_rate; runtime/assists.c rt_map_clear_rate): the map screen
+# asks the game whether the save has the GameClear flag (1.9.0 0x7000d36aa0) and hides its rate block when the answer is
+# no. With the option on the answer is 1, so the rate shows before the game is cleared.
+def _map_clear_rate(gen, a):
+    w = _word(gen, a)
+    assert w >> 26 == 0x25, hex(w)  # bl isGameClear
+    target = a + sext(w & 0x3ffffff, 26) * 4
+    fn = f'f_{target:x}'
+    return ('{ extern int rt_map_clear_rate(void); if (rt_map_clear_rate()) c->x[0] = 1; '
+            f'else {{ extern void {fn}(Cpu *); c->x[30] = {a + 4:#x}ull; {fn}(c); }} }}'
+            f'  /* {a:#x}: bl {target:#x} (map: is the game cleared) */')
+
+
 # Gameplay > Keep crouch after camera (runtime/camera_stealth.c): when Link enters the Camera rune (`カメラ`), the
 # normal camera action clears his crouch bit and leaves him standing (`待機`) on exit. Record his crouch bit before
 # entering, route normal Camera exits back to crouch idle (`しゃがみ待機`) when enabled, and clear pending state on
@@ -1571,6 +1643,10 @@ PATCHES = {
     'arrow_fall_gravity': _arrow_gravity,
     'slide_launch_clear': _slide_launch_clear,
     'slide_launch_clear_second': _slide_launch_clear_second,
+    'glide_overspeed_dec_181c': _glide_overspeed_dec,
+    'glide_overspeed_dec_1824': _glide_overspeed_dec,
+    'glide_overspeed_add_181c': _glide_overspeed_add,
+    'glide_overspeed_add_1824': _glide_overspeed_add,
     'surf_contact': _surf_contact,
     'surf_boost_remove': _surf_boost_remove,
     'surf_jump_request': _surf_jump_request,
@@ -1646,15 +1722,19 @@ PATCHES = {
     'battle_info_b': _battle_info(1),
     'battle_info_c': _battle_info(2),
     'horse_crash': _horse_crash,
-    'horse_look_ahead': _horse_look_ahead,
+    'horse_stop_check': _horse_stop_check,
     'camera_enter_start': _camera_enter_start,
     'camera_exit_finished': _camera_exit_finished,
     'camera_exit_active': _camera_exit_active,
     'camera_leave': _camera_leave,
+    'horse_ride': _horse_ride,
+    'horse_stick_scale': _horse_stick_scale,
+    'horse_play_rate': _horse_play_rate,
     'item_tick': _item_tick,
     'place_count_read': _place_count_read,
     'place_travel': _place_travel,
     'place_icon': _place_icon,
+    'map_clear_rate': _map_clear_rate,
     'cjk_font_size': _cjk_font_size,
     'cjk_font_bin': _cjk_font_bin,
     'cjk_font_quad': _cjk_font_quad,

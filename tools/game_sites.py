@@ -181,6 +181,16 @@ SITES = [
          '1e200908 bd40ba60 52800028 39053e68', 1),
     # arrows' fall (tools/patches.py _arrow_gravity): the load of the gravity added to an arrow's velocity per update
     Site('arrow_fall_gravity', 'code', 'bd410a81 1e212849 bd410e81 1e21280a 94000000/fc000000 36000000/fff8001f f9404288 2d400500', 0),
+    # Experimental glide decay (tools/patches.py _glide_overspeed_dec): the paraglider's stick-gated update subtracts
+    # its OverSpeedDec parameter from velocity +0x181c / +0x1824 once per guest update, with no time step. The first
+    # three words are identical at both sites; the store word tells them apart. `at` 2 is the fsub at +8.
+    Site('glide_overspeed_dec_181c', 'code', 'f9403668 bd400101 1e213800 bd181e80', 2),
+    Site('glide_overspeed_dec_1824', 'code', 'f9403668 bd400101 1e213800 bd182680', 2),
+    # The fadd mirrors: with a non-positive target the guest ADDS OverSpeedDec instead of subtracting it. The fadd
+    # word is the same at both sites and the following branch back to the shared store cannot tell them apart, so
+    # the distinguishing fcmp word four words earlier is part of the pattern. `at` 4 is the fadd.
+    Site('glide_overspeed_add_181c', 'code', '1e2e2000 540000a5 f9403668 bd400101 1e212800', 4),
+    Site('glide_overspeed_add_1824', 'code', '1e2d2000 540000a5 f9403668 bd400101 1e212800', 4),
     # Experimental shield-surf takeoff grace (#305): contact update, boost removal and launch request.
     Site('surf_contact', 'code', '3941d2a8 36080008/fff8001f bd4066a0 1e202008 5400000d/ff00001f bd403261 1e202028 5400000d/ff00001f', 0),
     Site('surf_boost_remove', 'code', '1e203820 2f00e401 aa1403e1 1e216800 bd003260 0f016680 f94006a0 94000000/fc000000', 0),
@@ -389,10 +399,11 @@ SITES = [
     Site('battle_info_b', 'code', 'a9402428 a91da408 d3609d28 34000008/ff00001f 52800048 b901e808 d65f03c0 '
          'b941dc08', 0),
     Site('battle_info_c', 'code', 'b9400028 b901d008 d65f03c0', 0),
-    # the horse's crash check loading its gear, and the entry of its stop check's look-ahead (tools/patches.py
-    # _horse_crash, _horse_look_ahead; Cheats > Sure-footed horse)
+    # the horse's crash check loading its gear, and the entry of its stop check (tools/patches.py _horse_crash,
+    # _horse_stop_check; Cheats > Improved horse controls)
     Site('horse_crash', 'code', 'b9403428 7100111f 54000001/ff00001f d10303ff 6d072beb f90053f5 6d0823e9 a9097bfd', 0),
-    Site('horse_look_ahead', 'code', 'd105c3ff fd00a3e8 f900affc a914fbfd a9164ff4 910523fd aa0103f4 aa0003f3', 0),
+    Site('horse_stop_check', 'code', 'b940382a 3400000a/ff00001f f9400029 b9400928 37100008/fff8001f 3947102b '
+         '2a1f03e8 3500000b/ff00001f', 0),
     # Gameplay > Keep crouch after camera (tools/patches.py _camera_*; runtime/camera_stealth.c): crouch idle
     # target in the Player AI selector, Camera entry, the two Camera -> Wait exit branches, and Camera::leave().
     Site('camera_squat_idle', 'code',
@@ -411,6 +422,14 @@ SITES = [
     Site('camera_leave', 'code',
          '94000000/fc000000 14000000/fc000000 90000008/9f00001f 91000108/ffc003ff f9400100 14000000/fc000000 '
          'a9be7bfd f9000bf3 910003fd aa0003f3 f9400400 94000000/fc000000 37000000/fff8001f 94000000/fc000000', 4),
+    # the ridden horse's update after its prologue (x0: the riding action), its steering loading the gear's stick
+    # scale, and its steering storing the horse's play rate (tools/patches.py _horse_ride, _horse_stick_scale,
+    # _horse_play_rate; runtime/improved_horse.c; Cheats > Improved horse controls)
+    Site('horse_ride', 'code', 'd10a03ff aa0003f3 52804702 910123e0 2a1f03e1 910123f6 94000000/fc000000 f9400660', 0),
+    Site('horse_stick_scale', 'code', 'bc697901 1e210800 bc1b43a0 94000000/fc000000 d10153a1 aa1403e0 aa1303e2 '
+         '94000000/fc000000', 0),
+    Site('horse_play_rate', 'code', 'bd015500 14000000/fc000000 3948b669 1e2e2140 3948ba68 54000004/ff00001f '
+         '35000009/ff00001f 34000008/ff00001f', 0),
     # the pouch taking arrows off for the player's bow (tools/patches.py _remove_arrows; Accessibility > Infinite arrows)
     Site('pouch_remove_arrows', 'code', 'd101c3ff a9017bfd a9026ffc a90367fa a9045ff8 a90557f6 a9064ff4 910043fd '
          '90000008/9f00001f aa0003f3 f9400108/ffc003ff aa0103e0', 0),
@@ -555,6 +574,11 @@ SITES = [
     # Cheats > Map hooks the read (patches.py _place_icon) and clears the bit for places that were never visited,
     # so they keep the normal look while staying travel destinations.
     Site('place_icon', 'code', 'b9403e68 7217011f f9406121 a9414ff4 1e200c20 a8c27bfd d61f0020 a9414ff4', 0),
+    # The map's completion rate (tools/patches.py _map_clear_rate; runtime/assists.c rt_map_clear_rate): the map
+    # screen asks the game whether the save has the GameClear flag and hides its rate block when the answer is no
+    # (1.9.0 0x7000dab280: bl isGameClear, then tbz).
+    Site('map_clear_rate', 'code', '2a1f03e0 94000000/fc000000 36000000/ff00001f 90007df8/9f00001f f944cf18 '
+         'f9400300 94000000/fc000000', 1),
     # The game's memory (tools/patches.py _game_heap_size; runtime/kernel.c kernel_memory_setup): the size nninitStartup
     # asks SetMemoryHeapSize for (mov w0, #0xc3000000, then the 32 MB block malloc keeps), and the root heap's size
     # main hands sead's heap manager (mov w8, #0xc1000000: the heap less those 32 MB)
@@ -648,8 +672,9 @@ OPTIONAL_GROUPS = [
     ('link_life_store', 'link_life_tick'),
     ('stamina_store',),
     ('sprint_cost', 'sprint_press_cost', 'battle_info_field', 'battle_info_b', 'battle_info_c'),  # (Cheats > Free sprint: without them it does nothing)
-    ('horse_crash', 'horse_look_ahead'),  # (Cheats > Sure-footed horse: without them it does nothing)
     ('camera_squat_idle', 'camera_enter_start', 'camera_exit_finished', 'camera_exit_active', 'camera_leave'),
+    ('horse_crash', 'horse_stop_check'),  # (Cheats > Improved horse controls' stops: without them it does nothing)
+    ('horse_ride', 'horse_stick_scale', 'horse_play_rate'),  # (Cheats > Improved horse controls' steering: without them it does nothing)
     ('tp_gate',),  # (a far teleport of the control endpoint: without it a long jump freezes the world)
     ('title_version_text_a', 'title_version_text_b'),  # (the title's version line in full: without them it stops at 15 letters)
     ('item_tick', 'pouch_item_get', 'pouch_mgr'),
@@ -820,6 +845,10 @@ KNOWN = {
         'day_cycle_time_only': 0x70014266d4,
         'day_cycle_normal': 0x7001426788,
         'arrow_fall_gravity': 0x70005ee734,
+        'glide_overspeed_dec_181c': 0x7000c866f0,
+        'glide_overspeed_dec_1824': 0x7000c867b4,
+        'glide_overspeed_add_181c': 0x7000c86718,
+        'glide_overspeed_add_1824': 0x7000c867dc,
         'surf_contact': 0x70011e9e74,
         'surf_boost_remove': 0x70011e9e94,
         'surf_jump_request': 0x70011ea3d4,
@@ -908,12 +937,15 @@ KNOWN = {
         'battle_info_b': 0x700133dcac,
         'battle_info_c': 0x7001349648,
         'horse_crash': 0x70006b16c4,
-        'horse_look_ahead': 0x70006b4218,
+        'horse_stop_check': 0x70006b19c8,
         'camera_squat_idle': 0x7000ca9ef0,
         'camera_enter_start': 0x7000caa6f4,
         'camera_exit_finished': 0x7000cabfb4,
         'camera_exit_active': 0x7000cacfac,
         'camera_leave': 0x7000ca3734,
+        'horse_ride': 0x70006afe60,
+        'horse_stick_scale': 0x70006b1cf4,
+        'horse_play_rate': 0x70006b218c,
         'item_tick': 0x7000cc4c3c,
         'pouch_item_get': 0x7000d921bc,
         'pouch_mgr': 0x7001e18570,
@@ -927,6 +959,7 @@ KNOWN = {
         'place_count_read': 0x7000d7bea4,
         'place_travel': 0x7000d7b904,
         'place_icon': 0x7000dac488,
+        'map_clear_rate': 0x7000dab280,
         'main_data': 0x7001b7a000,
         'main_end': 0x7001e98000,
     },

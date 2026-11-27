@@ -1,7 +1,7 @@
 # Design Specification: Savage Wind Recomp — Faithful Enhanced Build
 
 **Date:** 2026-11-26  
-**Workspace:** `/home/vlad/Programming/VibeCoded_Projects/SavageWindsRecomp`  
+**Workspace:** `<repo>`
 **Fork (`origin`):** `https://github.com/rydof/SavageWindRecomp`  
 **Upstream (`upstream`):** `https://github.com/Revivedx/SavageWindRecomp` (base branch: `upstream/test`)
 
@@ -25,5 +25,5 @@ Build a cleaner, more complete local version of **Savage Wind Recomp** (Switch B
   - Pushing to `origin` or `upstream` without explicit user consent.
 - **Anti-Goals:**
   - Never commit Nintendo files, keys, firmware, extracted assets, `generated/` code, saves, or local paths.
-  - Never modify `/home/vlad/Switch Stuff` or real saves/settings in `~/.local/share/savagewind/`.
+  - Never modify `<switch-files>` or real saves/settings in `~/.local/share/savagewind/`.
   - Never break Windows compatibility with unguarded POSIX-only code in shared runtime paths.
