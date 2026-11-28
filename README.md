@@ -58,7 +58,7 @@ game.
 - Longer draw distance, sharper shadows, HBAO, grass ground cover, map zoom blur, native-resolution minimap, Fixed high LOD, adjustable field of view, colour grading and HDR
 - Keyboard and mouse with real mouse camera, and any controller, gyro included (Steam Input, DSU servers, handhelds)
 - Automatic PlayStation, Xbox, Steam Deck, and Switch button prompts with matching live 4-button HUD layout
-- Built-in in-game benchmark (7 routes, cinematic flythroughs, 1%/0.1% lows, frametime graph, CSV/Markdown export)
+- Built-in in-game benchmark (7 routes, cinematic flythroughs, 1%/0.1% lows, frametime graph, CSV/Markdown export — **currently broken**: Link dies during teleportation and gets stuck in an infinite teleporting loop)
 - Save profiles, backups, a custom save folder, and Wii U / Cemu save import
 - Steam Deck and PC handhelds, and Add to Steam
 - One-click updates from Savage Wind Configuration
