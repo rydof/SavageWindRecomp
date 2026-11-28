@@ -149,7 +149,10 @@ int bind_pad_family(int type, int vendor, int product, const char *name, bool fi
         return 2;
     if (type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO || type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT ||
         type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT || type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR ||
-        type == SDL_GAMEPAD_TYPE_GAMECUBE || vendor == 0x057e || contains_ci(name, "nintendo") ||
+#if SDL_VERSION_ATLEAST(3, 4, 0)
+        type == SDL_GAMEPAD_TYPE_GAMECUBE ||
+#endif
+        vendor == 0x057e || contains_ci(name, "nintendo") ||
         contains_ci(name, "switch") || contains_ci(name, "joy-con"))
         return 0;
     if (vendor == BIND_VALVE_VENDOR) {

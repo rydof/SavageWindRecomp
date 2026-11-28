@@ -5,6 +5,7 @@
 // The hearts cheat uses the heap search from Slop of the Wild, with MaxHartValue to identify the s32 vtable.
 // A primary s32 flag is 0x28 bytes: +0 the vtable, +0x18 the value, and +0x1c the CRC32 of its name.
 #include <errno.h>
+#include <math.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
